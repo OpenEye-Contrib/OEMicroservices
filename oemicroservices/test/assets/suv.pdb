@@ -1,0 +1,114 @@
+HEADER    SIGNALING PROTEIN                                           
+REMARK  99                                                                      
+REMARK  99 MOE v2014.09 (Chemical Computing Group Inc.) Wed Jun 10 20:55:05 2015
+HETATM    1  C1  SUV B2001      51.065   6.873  55.061  1.00 28.86           C
+HETATM    2  N1  SUV B2001      51.928   5.873  54.855  1.00 29.78           N
+HETATM    3  O1  SUV B2001      50.274   7.311  54.118  1.00 31.92           O
+HETATM    4 CL1  SUV B2001      47.586  11.394  57.073  1.00 41.55          CL
+HETATM    5  N2  SUV B2001      50.868   7.553  56.183  1.00 34.08           N
+HETATM    6  O2  SUV B2001      55.542   8.030  54.017  1.00 34.54           O
+HETATM    7  C3  SUV B2001      49.914   8.446  55.906  1.00 34.98           C
+HETATM    8  N3  SUV B2001      54.068   6.441  53.433  1.00 36.48           N
+HETATM    9  C4  SUV B2001      49.332   9.378  56.660  1.00 21.58           C
+HETATM   10  N4  SUV B2001      54.727   8.096  50.464  1.00 40.50           N
+HETATM   11  C5  SUV B2001      48.345  10.192  56.121  1.00 22.65           C
+HETATM   12  N5  SUV B2001      54.437   7.845  49.303  1.00 45.50           N
+HETATM   13  C6  SUV B2001      47.973  10.028  54.796  1.00 30.72           C
+HETATM   14  N6  SUV B2001      55.807   7.587  50.753  1.00 38.01           N
+HETATM   15  C7  SUV B2001      48.611   9.044  54.061  1.00 28.58           C
+HETATM   16  C8  SUV B2001      49.552   8.289  54.626  1.00 32.15           C
+HETATM   17  C11 SUV B2001      51.895   5.284  53.512  1.00 27.27           C
+HETATM   18  C12 SUV B2001      52.842   6.111  52.661  1.00 31.25           C
+HETATM   19  C14 SUV B2001      54.848   5.528  54.313  1.00 29.80           C
+HETATM   20  C15 SUV B2001      53.978   4.624  55.193  1.00 21.84           C
+HETATM   21  C16 SUV B2001      52.881   5.438  55.890  1.00 20.33           C
+HETATM   22  C17 SUV B2001      54.550   7.695  53.369  1.00 37.43           C
+HETATM   23  C19 SUV B2001      53.863   8.668  52.642  1.00 35.50           C
+HETATM   24  C20 SUV B2001      53.959   8.848  51.254  1.00 36.96           C
+HETATM   25  C21 SUV B2001      53.213   9.857  50.648  1.00 23.40           C
+HETATM   26  C22 SUV B2001      52.386  10.692  51.393  1.00 13.97           C
+HETATM   27  C23 SUV B2001      52.297  10.514  52.766  1.00 21.68           C
+HETATM   28  C24 SUV B2001      53.034   9.511  53.379  1.00 28.54           C
+HETATM   29  C27 SUV B2001      55.382   7.090  48.757  1.00 32.50           C
+HETATM   30  C28 SUV B2001      56.281   6.922  49.707  1.00 34.66           C
+HETATM   31  C29 SUV B2001      51.476  11.336  53.529  1.00 31.10           C
+HETATM   32  C30 SUV B2001      55.815   4.670  53.495  1.00 23.16           C
+HETATM   33  H4  SUV B2001      49.628   9.500  57.691  1.00 21.58           H
+HETATM   34  H6  SUV B2001      47.209  10.649  54.351  1.00 30.72           H
+HETATM   35  H7  SUV B2001      48.345   8.888  53.026  1.00 28.58           H
+HETATM   36 H111 SUV B2001      50.885   5.329  53.105  1.00 27.27           H
+HETATM   37 H112 SUV B2001      52.227   4.246  53.547  1.00 27.27           H
+HETATM   38 H121 SUV B2001      53.118   5.543  51.773  1.00 31.25           H
+HETATM   39 H122 SUV B2001      52.345   7.034  52.362  1.00 31.25           H
+HETATM   40  H14 SUV B2001      55.407   6.181  54.983  1.00 29.80           H
+HETATM   41 H151 SUV B2001      54.605   4.149  55.948  1.00 21.84           H
+HETATM   42 H152 SUV B2001      53.515   3.858  54.571  1.00 21.84           H
+HETATM   43 H161 SUV B2001      52.371   4.820  56.629  1.00 20.33           H
+HETATM   44 H162 SUV B2001      53.318   6.307  56.382  1.00 20.33           H
+HETATM   45  H21 SUV B2001      53.278   9.994  49.579  1.00 23.40           H
+HETATM   46  H22 SUV B2001      51.818  11.472  50.907  1.00 13.97           H
+HETATM   47  H24 SUV B2001      52.964   9.381  54.449  1.00 28.54           H
+HETATM   48  H27 SUV B2001      55.409   6.698  47.751  1.00 32.50           H
+HETATM   49  H28 SUV B2001      57.204   6.364  49.647  1.00 34.66           H
+HETATM   50 H291 SUV B2001      50.981  12.058  52.880  1.00 31.10           H
+HETATM   51 H292 SUV B2001      52.077  11.865  54.269  1.00 31.10           H
+HETATM   52 H293 SUV B2001      50.726  10.730  54.037  1.00 31.10           H
+HETATM   53 H301 SUV B2001      55.249   4.020  52.828  1.00 23.16           H
+HETATM   54 H302 SUV B2001      56.419   4.062  54.168  1.00 23.16           H
+HETATM   55 H303 SUV B2001      56.466   5.317  52.906  1.00 23.16           H
+CONECT    1    2    3    5    5
+CONECT    2    1   17   21
+CONECT    3    1   16
+CONECT    4   11
+CONECT    5    1    1    7
+CONECT    6   22   22
+CONECT    7    5    9   16   16
+CONECT    8   18   19   22
+CONECT    9    7   11   11   33
+CONECT   10   12   14   24
+CONECT   11    4    9    9   13
+CONECT   12   10   29   29
+CONECT   13   11   15   15   34
+CONECT   14   10   30   30
+CONECT   15   13   13   16   35
+CONECT   16    3    7    7   15
+CONECT   17    2   18   36   37
+CONECT   18    8   17   38   39
+CONECT   19    8   20   32   40
+CONECT   20   19   21   41   42
+CONECT   21    2   20   43   44
+CONECT   22    6    6    8   23
+CONECT   23   22   24   28   28
+CONECT   24   10   23   25   25
+CONECT   25   24   24   26   45
+CONECT   26   25   27   27   46
+CONECT   27   26   26   28   31
+CONECT   28   23   23   27   47
+CONECT   29   12   12   30   48
+CONECT   30   14   14   29   49
+CONECT   31   27   50   51   52
+CONECT   32   19   53   54   55
+CONECT   33    9
+CONECT   34   13
+CONECT   35   15
+CONECT   36   17
+CONECT   37   17
+CONECT   38   18
+CONECT   39   18
+CONECT   40   19
+CONECT   41   20
+CONECT   42   20
+CONECT   43   21
+CONECT   44   21
+CONECT   45   25
+CONECT   46   26
+CONECT   47   28
+CONECT   48   29
+CONECT   49   30
+CONECT   50   31
+CONECT   51   31
+CONECT   52   31
+CONECT   53   32
+CONECT   54   32
+CONECT   55   32
+END
