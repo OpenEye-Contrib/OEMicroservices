@@ -64,6 +64,7 @@ interaction_arg_parser.add_argument('resn', type=str, location='args')   # Ligan
 #                                                                                                                      #
 ########################################################################################################################
 
+
 def _render_image(receptor, ligand, args):
     """
     Render a receptor-ligand interaction image
@@ -82,11 +83,11 @@ def _render_image(receptor, ligand, args):
     width = args['width']                                       # Image width
     height = args['height']                                     # Image height
     title = args['title']                                       # Image title
-    use_molecule_title = bool(args['keepTitle'])                # Use the molecule title in the molecule file
-    bond_scaling = bool(args['scaleBonds'])                      # Bond width scales with size
+    use_molecule_title = bool(args['keeptitle'])                # Use the molecule title in the molecule file
+    bond_scaling = bool(args['scalebonds'])                      # Bond width scales with size
     image_format = args['format']                               # The output image format
     image_mimetype = get_image_mime_type(image_format)          # MIME type corresponding to the image format
-    title_location = get_title_location(args['titleLoc'])       # The OpenEye title location (if we have a title)
+    title_location = get_title_location(args['titleloc'])       # The OpenEye title location (if we have a title)
     legend = bool(args['legend'])                               # Display a legend
     background = get_color_from_rgba(args['background'])        # Background color
 
@@ -275,6 +276,7 @@ class FindLigandInteractionDepictor(Resource):
         # Call the superclass initializers
         super(FindLigandInteractionDepictor, self).__init__()
 
+    # noinspection PyMethodMayBeStatic
     def post(self, fmt):
         """
         Render a raw receptor-ligand that has been POST'ed to this resource by first searching for the ligand

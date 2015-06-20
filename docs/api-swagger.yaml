@@ -1,0 +1,532 @@
+################################################################################
+# OpenEye Microservices API Documentation for Swagger.io                       #
+#                                                                              #
+# NOTE: This file is used to automatically generate api-swagger.json           #
+#                                                                              #
+# Changelog:                                                                   #
+# ----------                                                                   #
+# 2015-06-12 - Created (Scott Arne Johnson)                                    #
+################################################################################
+swagger: '2.0'
+
+# This is your document metadata
+info:
+  title: OpenEye Microservices
+  version: "1.0.0"
+  description: Collection of Services that use the OpenEye toolkits
+  contact:
+    name: Scott Arne Johnson
+    email: scott.johnson6@merck.com
+  license:
+    name: Apache License 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0
+
+schemes:
+  - http
+
+paths:
+  # ---------------------------------------------------------------------------
+  # | 2D Depiction of Small Molecules                                         |
+  # | Handling Class: MoleculeDepictor                                        |
+  # ---------------------------------------------------------------------------
+  /v1/depict/structure/{fmt}:
+    get:
+      description: 
+        >
+        Render 2D depictions of small molecules using the OEDepict Toolkit. This
+        resource requires two different parameters: {fmt} in the URL path, which
+        specifies the molecule file format (e.g. pdb, sdf, etc.); and val in the
+        query string, which is the molecule file string (e.g. anything from a
+        simple SMILES string to a URL encoded PDB file). Remember that URLs have
+        a 2083 character limit, so use the POST method if you plan to use
+        lengthy molecule files. If the debug parameter is false or not
+        specified, then any error will result in a 200 OK response and a PNG
+        image with an error message rendered onto it. This allows pages to
+        render without missing images, even if there are errors.
+      parameters:
+        # -- Required parameters ----------------------------------------------
+        - $ref: "#/parameters/fmtPathParam"
+        - name: val
+          in: query
+          description: The input molecule string
+          required: true
+          type: string
+        # -- The following parameters are inherited from DepictorBase --------
+        - $ref: "#/parameters/formatParam"
+        - $ref: "#/parameters/reparseParam"
+        - $ref: "#/parameters/keepTitleParam"
+        - $ref: "#/parameters/titleLocParam"
+        - $ref: "#/parameters/titleParam"
+        - $ref: "#/parameters/gzParam"
+        - $ref: "#/parameters/scaleBondsParam"
+        - $ref: "#/parameters/backgroundParam"
+        - $ref: "#/parameters/debugParam"
+        # -- End options inherited from DepictorBase --------------------------
+        - name: width
+          type: integer
+          description: The image width
+          in: query
+          required: false
+          default: 400
+        - name: height
+          type: integer
+          description: The image height
+          required: false
+          default: 400
+          in: query
+        - name: highlight
+          in: query
+          type: string
+          collectionFormat: multi
+          description: SMILES substructure to highlight (accepts multiple)
+          required: false
+        - name: highlightcolor
+          in: query
+          type: string
+          description: Hex RGB (RRGGBB) color for highlighting substructures
+          default: '7070ff'
+        - name: highlightstyle
+          description: The molecule highlight style
+          required: false
+          type: string
+          default: default
+          in: query
+          enum:
+            - default
+            - ballandstick
+            - stick
+            - color
+            - cogwheel
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: 'Successful response'
+          schema:
+            title: Image
+            description: 'The molecule image'
+            format: byte array
+        400:
+          description: 'Error (must use debug=true)'
+          schema:
+            $ref: '#/definitions/Error'
+    post:
+      # Describe this verb here. Note: you can use markdown
+      description: 
+        >
+        Render 2D depictions of small molecules using the OEDepict Toolkit.
+        Similar to the GET method, this resource requires a {fmt} parameter in
+        the URL path to specify the moleucle format. The only difference is that
+        the raw molecule file string is placed in the body of the post (e.g.
+        the PDB or SD file). Similar to the GET method, if the debug parameter
+        is false or not specified, then any error will result in a 200 OK
+        repsonse and a PNG image with an error message rendered onto it. This
+        allows pages to render without missing images, even if there are errors.
+      parameters:
+        # -- Required parameters ----------------------------------------------
+        - $ref: "#/parameters/fmtPathParam"
+        - name: fileString
+          in: body
+          required: true
+          description: The molecule file
+          schema:
+            type: string
+        # -- The following parameters are inherited from DepictorBase --------
+        - $ref: "#/parameters/formatParam"
+        - $ref: "#/parameters/reparseParam"
+        - $ref: "#/parameters/keepTitleParam"
+        - $ref: "#/parameters/titleLocParam"
+        - $ref: "#/parameters/titleParam"
+        - $ref: "#/parameters/gzParam"
+        - $ref: "#/parameters/scaleBondsParam"
+        - $ref: "#/parameters/backgroundParam"
+        - $ref: "#/parameters/debugParam"
+        # -- End options inherited from DepictorBase --------------------------
+        - name: width
+          type: integer
+          description: The image width
+          in: query
+          required: false
+          default: 400
+        - name: height
+          type: integer
+          description: The image height
+          required: false
+          default: 400
+          in: query
+        - name: highlight
+          in: query
+          type: string
+          collectionFormat: multi
+          description: SMILES substructure to highlight (accepts multiple)
+          required: false
+        - name: color
+          in: query
+          type: string
+          description: Hex RGB (RRGGBB) color for highlighting substructures
+          default: '7070ff'
+        - name: style
+          description: The molecule highlight style
+          required: false
+          type: string
+          default: default
+          in: query
+          enum:
+            - default
+            - ballandstick
+            - stick
+            - color
+            - cogwheel
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: 'Successful response'
+          schema:
+            title: Image
+            description: 'The molecule image'
+            format: byte array
+        400:
+          description: 'Error (must use debug=true)'
+          schema:
+            $ref: '#/definitions/Error'
+  # ---------------------------------------------------------------------------
+  # | Receptor-Ligand Interaction Map using Grapheme TK                       |
+  # | Handling Class: InteractionDepictor                                     |
+  # ---------------------------------------------------------------------------
+  /v1/depict/interaction:
+    post:
+      description: 
+        >
+        Render a receptor-ligand interaction map (also known as a 2.5D image).
+        This resource requires a POST with a specific JSON string that contains
+        the split ligand and receptor. The individual file formats of the
+        ligand and receptor are specified in the string, as well as if they
+        are compressed. If you do not have the ligand and receptor split,
+        consider using the '/v1/depict/interaction/search/{fmt}' resource, which
+        has query parameters that allow the ligand to specified within a single
+        file that contains both the ligand and receptor. Similar to the other
+        ligand depiction resources, if debug is not specified, any error will
+        still produce a 200 OK response and a PNG image with an error message
+        rendered onto it. This allows pages to render without missing images,
+        even if there are errors.
+      parameters:
+        # -- Required parameters ----------------------------------------------
+        - name: jsonString
+          in: body
+          required: true
+          description: The split receptor and ligand files as JSON
+          schema:
+            $ref: '#/definitions/MoleculeSplit'
+        # -- The following parameters are inherited from DepictorBase --------
+        - $ref: "#/parameters/formatParam"
+        - $ref: "#/parameters/reparseParam"
+        - $ref: "#/parameters/keepTitleParam"
+        - $ref: "#/parameters/titleLocParam"
+        - $ref: "#/parameters/titleParam"
+        - $ref: "#/parameters/gzParam"
+        - $ref: "#/parameters/scaleBondsParam"
+        - $ref: "#/parameters/backgroundParam"
+        - $ref: "#/parameters/debugParam"
+        # -- End options inherited from DepictorBase --------------------------
+        - name: width
+          type: integer
+          description: The image width
+          in: query
+          required: false
+          default: 800
+        - name: height
+          type: integer
+          description: The image height
+          required: false
+          default: 600
+          in: query
+        - name: legend
+          type: boolean
+          required: false
+          in: query
+          description: Display the legend
+          default: true
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: 'Successful response'
+          schema:
+            title: Image
+            description: 'The molecule image'
+            format: byte array
+        400:
+          description: 'Error (must use debug=true)'
+          schema:
+            $ref: '#/definitions/Error'
+  # ---------------------------------------------------------------------------
+  # | Receptor-Ligand Interaction Map with Ligand Search using Grapheme TK    |
+  # | Handling Class: FindLigandInteractionDepictor                           |
+  # ---------------------------------------------------------------------------
+  /v1/depict/interaction/search/{fmt}:
+    post:
+      description: 
+        >
+        Render a receptor-ligand interaction map (also known as a 2.5D image).
+        This resource only requires the raw molecule file containing both the
+        ligand and receptor to be contained in the POST body. The 'resi',
+        'resn', and 'chain' query parameters can then be used in any combination
+        to specify the ligand within the receptor. If your ligand and receptor
+        are already split into two different files, consider using the
+        '/v1/depict/interaction' instead. Similar to the other ligand depiction
+        resources, if debug is not specified, any error will still produce a
+        200 OK response and a PNG image with an error message rendered onto it.
+        This allows pages to render without missing images, even if there are
+        errors.
+      parameters:
+        # -- Required parameters ----------------------------------------------
+        - name: fileString
+          in: body
+          required: true
+          description: The molecule file
+          schema:
+            type: string
+        - $ref: "#/parameters/fmtPathParam"
+        # -- The following parameters are inherited from DepictorBase --------
+        - $ref: "#/parameters/formatParam"
+        - $ref: "#/parameters/reparseParam"
+        - $ref: "#/parameters/keepTitleParam"
+        - $ref: "#/parameters/titleLocParam"
+        - $ref: "#/parameters/titleParam"
+        - $ref: "#/parameters/gzParam"
+        - $ref: "#/parameters/scaleBondsParam"
+        - $ref: "#/parameters/backgroundParam"
+        - $ref: "#/parameters/debugParam"
+        # -- End options inherited from DepictorBase --------------------------
+        - name: width
+          type: integer
+          description: The image width
+          in: query
+          required: false
+          default: 800
+        - name: height
+          type: integer
+          description: The image height
+          required: false
+          default: 600
+          in: query
+        - name: legend
+          type: boolean
+          required: false
+          in: query
+          description: Display the legend
+          default: true
+      # Expected responses for this operation:
+      responses:
+        # Response code
+        200:
+          description: 'Successful response'
+          schema:
+            title: Image
+            description: 'The molecule image'
+            format: byte array
+        400:
+          description: 'Error (must use debug=true)'
+          schema:
+            $ref: '#/definitions/Error'
+  # ---------------------------------------------------------------------------
+  # | Convert Between Molecule File Formats with OEChem TK                    |
+  # | Handling Class: MoleculeConvert                                     |
+  # ---------------------------------------------------------------------------
+  /v1/convert/molecule:
+    post:
+      description: 
+        >
+        Convert between different molecule file formats. This resource expects
+        a JSON object that defines both the molecule input and output format
+        information. A JSON response is produce that provides the output
+        molecule as well as echoing the output format information.
+      parameters:
+        # -- Required parameters ----------------------------------------------
+        - name: jsonString
+          in: body
+          required: true
+          description: The molecule and I/O format infomration
+          schema:
+            $ref: '#/definitions/MoleculeConvertRequest'
+      responses:
+        # Response code
+        200:
+          description: 'Successful response'
+          schema:
+            title: Image
+            description: 'The molecule image'
+            format: byte array
+        400:
+          description: 'On any error'
+          schema:
+            $ref: '#/definitions/Error'
+###############################################################################
+# JSON Schema Definitions                                                     #
+###############################################################################
+definitions:
+  # Error message
+  Error:
+    description: An error message
+    properties:
+      error:
+        type: string
+        description: Description of the error
+  # A receptor and ligand
+  MoleculeSplit:
+    description: A split receptor and ligand
+    properties:
+      ligand:
+        $ref: '#/definitions/Molecule'
+      receptor:
+        $ref: '#/definitions/Molecule'
+  # A molecule with input/output conversion data
+  MoleculeConvertRequest:
+    description: A molecule with input and output conversion information
+    properties:
+      molecule:
+        required:
+          - value
+        properties:
+          value:
+            type: string
+            description: A string containing the input molecule
+          input:
+            required:
+              - format
+            properties:
+              format: 
+                type: string
+                description: The file format of the input molecule string
+              gz: 
+                type: boolean
+                description: If the input molecule string is gzipped and then base64 encoded
+          output:
+            required:
+              - format
+            properties:
+              format: 
+                type: string
+                description: The file format of the output molecule string
+              gz: 
+                type: boolean
+                description: If the output molecule string should be gzipped and then base64 encoded
+  # A molecule that has been converted
+  Molecule:
+    description: A molecule string with accompanying file format description
+    properties:
+      molecule:
+        required:
+          - value
+          - format
+        properties:
+          value:
+            type: string
+            description: A string containing the molecule
+          format:
+            type: string
+            description: The file format of the molecule string
+          gz:
+            type: boolean
+            description: If the molecule string is gzipped and base64 encoded
+###############################################################################
+# Reusable Parameters                                                         #
+#                                                                             #
+# The following parameters are used in multiple resources, so we define them  #
+# once here and use references                                                #
+###############################################################################
+parameters:
+  # -- The following parameters are inherited from DepictorBase ---------------
+  formatParam:
+    name: format
+    description: The resulting image format
+    required: false
+    default: png
+    type: string
+    in: query
+    enum:
+      - png
+      - svg
+      - ps
+      - pdf
+  reparseParam:
+    name: reparse
+    in: query
+    description: Reparse the molecule chemistry
+    required: false
+    type: boolean
+    default: false
+  keepTitleParam:
+    name: keepTitle
+    description: Keep any existing molecule title
+    required: false
+    type: boolean
+    in: query
+    default: false
+  titleLocParam:
+    name: titleLoc
+    in: query
+    required: false
+    description: The location of the title (if one exists)
+    type: string
+    enum:
+      - top
+      - bottom
+    default: top
+  titleParam:
+    name: title
+    description: The molecule title
+    required: false
+    type: string
+    in: query
+  gzParam:
+    name: gz
+    description: Molecule file string is gzipped and then base64 encoded
+    in: query
+    required: false
+    type: boolean
+    default: false
+  scaleBondsParam:
+    name: scaleBonds
+    in: query
+    required: false
+    description: Scale bond width with molecule size
+    default: false
+    type: boolean
+  backgroundParam:
+    name: background
+    required: false
+    type: string
+    in: query
+    description: Hex RGB (RRGGBB) or hex RGBA (RRGGBBAA) string that defines the background color
+    default: ffffff00
+  debugParam:
+    name: debug
+    required: false
+    type: boolean
+    in: query
+    description: Return a JSON response on error rather than an error image
+    default: false
+  # -- File format path parameter ---------------------------------------------
+  fmtPathParam:
+    name: fmt
+    in: path
+    required: true
+    description: The file format of the molecule string
+    enum:
+      - smiles
+      - smi
+      - ism
+      - usm
+      - pdb
+      - mdl
+      - mol
+      - oeb
+      - xyz
+      - skc
+      - sdf
+      - cdx
+      - mol2
+      - mmod
+    type: string

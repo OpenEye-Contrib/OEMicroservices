@@ -51,9 +51,9 @@ depictor_arg_parser.add_argument('height', type=int, default=400, location='args
 # Substructure to highlight (multiple values allowed)
 depictor_arg_parser.add_argument('highlight', type=str, action='append', location='args')
 # Hex code for coloring the substructure
-depictor_arg_parser.add_argument('color',  type=str, default='#7070FF', location='args')
+depictor_arg_parser.add_argument('highlightcolor',  type=str, default='#7070FF', location='args')
 # Style in which to render the highlighted substructure
-depictor_arg_parser.add_argument('style',  type=str, default='default', location='args')
+depictor_arg_parser.add_argument('highlightstyle',  type=str, default='default', location='args')
 # Only for GET: the molecule string
 depictor_arg_parser.add_argument('val', type=str, location='args')
 
@@ -130,18 +130,18 @@ class MoleculeDepictor(Resource):
         # *********************************************************************
         # *                      Parse Parameters                             *
         # *********************************************************************
-        width = args['width']                                    # Image width
-        height = args['height']                                  # Image height
-        title = args['title']                                    # Image title
-        use_molecule_title = bool(args['keepTitle'])             # Use the molecule title in the molecule file
-        bond_scaling = bool(args['scaleBonds'])                   # Bond width scales with size
-        image_format = args['format']                            # The output image format
-        image_mimetype = get_image_mime_type(image_format)       # MIME type corresponding to the image format
-        highlight_style = get_highlight_style(args['style'])     # The OpenEye substructure highlights style
-        title_location = get_title_location(args['titleLoc'])    # The OpenEye title location (if we have a title)
-        highlight = args['highlight']                            # SMARTS substructures to highlight
-        background = get_color_from_rgba(args['background'])     # Background color
-        color = get_color_from_rgba(args['color'])               # Highlight color
+        width = args['width']                                          # Image width
+        height = args['height']                                        # Image height
+        title = args['title']                                          # Image title
+        use_molecule_title = bool(args['keeptitle'])                   # Use the molecule title in the molecule file
+        bond_scaling = bool(args['scalebonds'])                        # Bond width scales with size
+        image_format = args['format']                                  # The output image format
+        image_mimetype = get_image_mime_type(image_format)             # MIME type corresponding to the image format
+        highlight_style = get_highlight_style(args['highlightstyle'])  # The substructure highlights style
+        title_location = get_title_location(args['titleloc'])          # The title location (if we have a title)
+        highlight = args['highlight']                                  # SMARTS substructures to highlight
+        background = get_color_from_rgba(args['background'])           # Background color
+        color = get_color_from_rgba(args['highlightcolor'])            # Highlight color
 
         # Make sure we got valid inputs
         if not image_mimetype:
