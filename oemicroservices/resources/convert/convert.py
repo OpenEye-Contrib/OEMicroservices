@@ -25,7 +25,7 @@ from flask.ext.restful import Resource, request
 from flask import Response
 from openeye.oechem import *
 
-from oemicroservices.common.util import get_oeformat, compress_string, read_molecule_from_string
+from oemicroservices.common.util import compress_string, read_molecule_from_string
 
 ########################################################################################################################
 #                                                                                                                      #
@@ -114,7 +114,10 @@ class MoleculeConvert(Resource):
 
             # Prepare the molecule for writing
             ofs = oemolostream()
-            ofs.SetFormat(get_oeformat(payload['molecule']['output']['format']))
+            ofs_format = OEGetFileType(payload['molecule']['output']['format'])
+            if ofs_format == OEFormat_UNDEFINED:
+                raise Exception("Unknown output file type: " + payload['molecule']['output']['format'])
+            ofs.SetFormat(ofs_format)
             ofs.openstring()
             OEWriteMolecule(ofs, mol)
 

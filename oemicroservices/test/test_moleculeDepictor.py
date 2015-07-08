@@ -65,4 +65,4 @@ class TestMoleculeDepictor(TestCase):
     def test_invalid_file_format(self):
         response = self.app.get('/v1/depict/structure/invalid?val=c1ccccc1&debug=true')
         self.assertEqual("400 BAD REQUEST", response.status)
-        self.assertEqual('{"error": "Invalid molecule format"}', response.data.decode('utf-8'))
+        self.assertEqual('{"error": "Invalid molecule format: invalid"}', response.data.decode('utf-8'))

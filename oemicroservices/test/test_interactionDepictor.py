@@ -149,7 +149,8 @@ class TestInteractionDepictor(TestCase):
             headers={"content-type": "application/json"}
         )
         self.assertEqual("400 BAD REQUEST", response.status)
-        self.assertEqual('{"error": "Error reading ligand: Invalid molecule format"}', response.data.decode('utf-8'))
+        self.assertEqual('{"error": "Error reading ligand: Invalid molecule format: invalid"}',
+                         response.data.decode('utf-8'))
 
     def test_interaction_b64_ligand(self):
         """

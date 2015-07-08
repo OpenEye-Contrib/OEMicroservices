@@ -65,24 +65,6 @@ __title_locations = {
     'bottom': OETitleLocation_Bottom
 }
 
-# Supported molecule formats
-__molecule_formats = {
-    'smi': OEFormat_ISM,
-    'ism': OEFormat_ISM,
-    'usm': OEFormat_USM,
-    'pdb': OEFormat_PDB,
-    'mdl': OEFormat_MDL,
-    'mol': OEFormat_MDL,
-    'oeb': OEFormat_OEB,
-    'xyz': OEFormat_XYZ,
-    'skc': OEFormat_SKC,
-    'sdf': OEFormat_SDF,
-    'cdx': OEFormat_CDX,
-    'mol2': OEFormat_MOL2,
-    'mmod': OEFormat_MMOD,
-    'smiles': OEFormat_ISM
-}
-
 # Substructure highlight styles
 __highlight_styles = {
     'default': OEHighlightStyle_Default,
@@ -97,7 +79,6 @@ __highlight_styles = {
 #                                               Utility Functions                                                      #
 #                                                                                                                      #
 ########################################################################################################################
-
 
 def get_color_from_rgba(rgba):
     """
@@ -132,16 +113,6 @@ def get_image_mime_type(ext):
     return __mime_types.get(ext.replace('.', '').lower())
 
 
-def get_oeformat(ext):
-    """
-    Returns an OEFormat corresponding to a molecule file extension
-    :param ext: The molecule file extension
-    :type ext: str
-    :return: The image OEFormat or None if the molecule file extension is not known
-    """
-    return __molecule_formats.get(ext.replace('.', '').lower())
-
-
 def get_highlight_style(style):
     """
     Returns an OEHighlightStyle corresponding to a text style name
@@ -150,16 +121,6 @@ def get_highlight_style(style):
     :return: The OEHighlightStyle or None if the style name is not known
     """
     return __highlight_styles.get(style.lower())
-
-
-def get_molecule_format(ext):
-    """
-    Returns an OEFormat corresponding to a molecule file extension
-    :param ext: The molecule file extension
-    :type ext: str
-    :return: The OEFormat or None if the extension is not known
-    """
-    return __molecule_formats.get(ext.lower())
 
 
 def render_error_image(width, height, message="Error depicting molecule"):
@@ -200,7 +161,7 @@ def inflate_string(s):
     :return: The inflated string
     :rtype: str
     """
-    return zlib.decompress(base64.b64decode(s.encode('utf-8')), zlib.MAX_WBITS | 16)
+    return zlib.decompress(base64.b64decode(s.encode('utf-8')), zlib.MAX_WBITS | 16).decode('utf-8')
 
 
 def read_molecule_from_string(mol_string, extension, gz=False, reparse=False):
@@ -222,9 +183,12 @@ def read_molecule_from_string(mol_string, extension, gz=False, reparse=False):
         ifs = oemolistream()
 
         # Get the molecule format
-        mol_format = get_molecule_format(extension)
-        if not mol_format:
-            raise Exception("Invalid molecule format")
+        if extension.lower() == "smiles":
+            mol_format = OEFormat_SMI
+        else:
+            mol_format = OEGetFileType(extension)
+        if mol_format == OEFormat_UNDEFINED:
+            raise Exception("Invalid molecule format: " + extension)
 
         ifs.SetFormat(mol_format)
 
