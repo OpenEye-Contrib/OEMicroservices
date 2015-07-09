@@ -276,6 +276,12 @@ Fork it and submit a pull request!
 
 ## History
 
+**2015-07-09 - Version 1.2**
+
+- Replaced file type dictionary with OEGetFileType
+- Updated tests to reflect changes in file type handling
+- Fixed issue around OEGetFileType and Python 2/3 unicode vs UTF-8 strings
+
 **2015-06-20 - Version 1.1**
 
 Added documentation:

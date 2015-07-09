@@ -20,12 +20,26 @@
 # under the License.
 
 import json
+# noinspection PyUnresolvedReferences
+import sys
 
 from flask.ext.restful import Resource, request
 from flask import Response
 from openeye.oechem import *
 
 from oemicroservices.common.util import compress_string, read_molecule_from_string
+
+############################
+# Python 2/3 Compatibility #
+############################
+
+# To support unicode as UTF-8 in Python 2 and 3
+if sys.version_info < (3,):
+    def to_utf8(u):
+        return u.encode('utf-8')
+else:
+    def to_utf8(u):
+        return u
 
 ########################################################################################################################
 #                                                                                                                      #
@@ -114,7 +128,10 @@ class MoleculeConvert(Resource):
 
             # Prepare the molecule for writing
             ofs = oemolostream()
-            ofs_format = OEGetFileType(payload['molecule']['output']['format'])
+            if payload['molecule']['output']['format'] == "smiles":
+                ofs_format = OEFormat_SMI
+            else:
+                ofs_format = OEGetFileType(to_utf8(payload['molecule']['output']['format']))
             if ofs_format == OEFormat_UNDEFINED:
                 raise Exception("Unknown output file type: " + payload['molecule']['output']['format'])
             ofs.SetFormat(ofs_format)

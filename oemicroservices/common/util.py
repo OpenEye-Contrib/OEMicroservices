@@ -23,9 +23,15 @@ from flask import Response
 
 import base64
 import zlib
+# noinspection PyUnresolvedReferences
+import sys
 
 from openeye.oechem import *
 from openeye.oedepict import *
+
+############################
+# Python 2/3 Compatibility #
+############################
 
 try:
     from gzip import compress
@@ -41,6 +47,14 @@ except ImportError:
             gz.write(s)
         gz.close()
         return sio.getvalue()
+
+# To support unicode as UTF-8 in Python 2 and 3
+if sys.version_info < (3,):
+    def to_utf8(u):
+        return u.encode('utf-8')
+else:
+    def to_utf8(u):
+        return u
 
 ########################################################################################################################
 #                                                                                                                      #
@@ -79,6 +93,7 @@ __highlight_styles = {
 #                                               Utility Functions                                                      #
 #                                                                                                                      #
 ########################################################################################################################
+
 
 def get_color_from_rgba(rgba):
     """
@@ -186,7 +201,7 @@ def read_molecule_from_string(mol_string, extension, gz=False, reparse=False):
         if extension.lower() == "smiles":
             mol_format = OEFormat_SMI
         else:
-            mol_format = OEGetFileType(extension)
+            mol_format = OEGetFileType(to_utf8(extension))
         if mol_format == OEFormat_UNDEFINED:
             raise Exception("Invalid molecule format: " + extension)
 
