@@ -24,7 +24,8 @@ from flask.ext.restful import Api
 
 from oemicroservices.resources.depict.interaction import InteractionDepictor, FindLigandInteractionDepictor
 from oemicroservices.resources.convert.convert import MoleculeConvert
-from oemicroservices.resources.depict.molecule import MoleculeDepictor
+from oemicroservices.resources.depict.molecule import MoleculeDepictorV1 as MoleculeDepictor_v1
+from oemicroservices.resources.depict.molecule_v2 import MoleculeDepictorV2 as MoleculeDepictor_v2
 
 app = Flask(__name__)
 api = Api(app)
@@ -32,8 +33,10 @@ api = Api(app)
 ###############################################################################
 # Molecule depiction resources                                                #
 ###############################################################################
-# Depict a small molecule
-api.add_resource(MoleculeDepictor, '/v1/depict/structure/<string:fmt>')
+# Depict a small molecule using v1 of the API
+api.add_resource(MoleculeDepictor_v1, '/v1/depict/structure/<string:fmt>')
+# Depict a small molecule using v2 of the API (use path type so encoded slashes in base64 molecules work!)
+api.add_resource(MoleculeDepictor_v2, '/v2/depict/structure', '/v2/depict/structure/<path:molecule>')
 # Depict a receptor-ligand complex
 api.add_resource(InteractionDepictor, '/v1/depict/interaction')
 # Depict a receptor-ligand complex by first searching for the ligand in the raw file

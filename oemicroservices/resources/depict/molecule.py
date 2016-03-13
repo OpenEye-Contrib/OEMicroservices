@@ -27,7 +27,7 @@ from openeye.oechem import *
 
 from openeye.oedepict import *
 
-from oemicroservices.resources.depict.base import depictor_base_arg_parser
+from oemicroservices.resources.depict.base import depictor_base_arg_parser_v1
 from oemicroservices.common.util import (
     render_error_image,
     get_image_mime_type,
@@ -38,12 +38,12 @@ from oemicroservices.common.util import (
 
 ########################################################################################################################
 #                                                                                                                      #
-#                                        Molecule depictor argument parser                                             #
+#                                      Molecule depictor v1 argument parser                                            #
 #                                                                                                                      #
 ########################################################################################################################
 
 # Extend the standard image_parser
-depictor_arg_parser = depictor_base_arg_parser.copy()
+depictor_arg_parser = depictor_base_arg_parser_v1.copy()
 # The image width
 depictor_arg_parser.add_argument('width', type=int, default=400, location='args')
 # The image height
@@ -61,18 +61,19 @@ depictor_arg_parser.add_argument('val', type=str, location='args')
 #                                                                                                                      #
 #                                                  MoleculeDepictor                                                    #
 #                                    RESTful resource for depicting small molecules                                    #
+#                                                      API v1                                                          #
 #                                                                                                                      #
 ########################################################################################################################
 
 
-class MoleculeDepictor(Resource):
+class MoleculeDepictorV1(Resource):
     """
     Render a small molecule in 2D
     """
 
     def __init__(self):
         # Initialize superclass
-        super(MoleculeDepictor, self).__init__()
+        super(MoleculeDepictorV1, self).__init__()
 
     def get(self, fmt):
         """

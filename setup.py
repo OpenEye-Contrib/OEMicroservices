@@ -23,7 +23,7 @@ from setuptools import setup
 
 setup(
     name='OEMicroservices',
-    version='1.2',
+    version='1.3',
     packages=['oemicroservices', 'oemicroservices.test', 'oemicroservices.common', 'oemicroservices.resources',
               'oemicroservices.resources.depict', 'oemicroservices.resources.convert'],
     url='https://github.com/OpenEye-Contrib/OEMicroservices',

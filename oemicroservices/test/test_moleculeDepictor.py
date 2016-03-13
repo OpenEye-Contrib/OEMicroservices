@@ -44,17 +44,17 @@ class TestMoleculeDepictor(TestCase):
         app.config['TESTING'] = True
         self.app = app.test_client()
 
-    def test_get_smiles(self):
+    def test_get_smiles_v1(self):
         response = self.app.get('/v1/depict/structure/smiles?val=c1ccccc1&debug=true')
         self.assertEqual("200 OK", response.status)
 
-    def test_get_b64_smiles(self):
+    def test_get_b64_smiles_v1(self):
         # Compress and encode
         url_compressed = quote(compress_string('c1ccccc1'))
         response = self.app.get('/v1/depict/structure/smiles?val={0}&debug=true&gz=true'.format(url_compressed))
         self.assertEqual("200 OK", response.status)
 
-    def test_get_b64_pdb(self):
+    def test_get_b64_pdb_v1(self):
         with open(LIGAND_FILE, 'r') as f:
             ligand = f.read()
         # Compress and encode
@@ -62,7 +62,33 @@ class TestMoleculeDepictor(TestCase):
         response = self.app.get('/v1/depict/structure/pdb?val={0}&debug=true&gz=true'.format(url_compressed))
         self.assertEqual("200 OK", response.status)
 
-    def test_invalid_file_format(self):
+    def test_invalid_file_format_v1(self):
         response = self.app.get('/v1/depict/structure/invalid?val=c1ccccc1&debug=true')
+        self.assertEqual("400 BAD REQUEST", response.status)
+        self.assertEqual('{"error": "Invalid molecule format: invalid"}', response.data.decode('utf-8'))
+
+    def test_get_smiles_v2(self):
+        response = self.app.get('/v2/depict/structure/c1ccccc1?molecule-format=smiles&debug=false')
+        print(response)
+        self.assertEqual("200 OK", response.status)
+
+    def test_get_b64_smiles_v2(self):
+        # Compress and encode
+        url_compressed = quote(compress_string('c1ccccc1'))
+        url_string = '/v2/depict/structure/{0}?molecule-format=smiles&debug=true&gz=true'.format(url_compressed)
+        response = self.app.get(url_string)
+        self.assertEqual("200 OK", response.status)
+
+    def test_get_b64_pdb_v2(self):
+        with open(LIGAND_FILE, 'r') as f:
+            ligand = f.read()
+        # Compress and encode
+        url_compressed = quote(compress_string(ligand))
+        url_string = '/v2/depict/structure/{0}?molecule-format=pdb&debug=true&gz=true'.format(url_compressed)
+        response = self.app.get(url_string)
+        self.assertEqual("200 OK", response.status)
+
+    def test_invalid_file_format_v2(self):
+        response = self.app.get('/v2/depict/structure/c1ccccc1?molecule-format=invalid&debug=true')
         self.assertEqual("400 BAD REQUEST", response.status)
         self.assertEqual('{"error": "Invalid molecule format: invalid"}', response.data.decode('utf-8'))

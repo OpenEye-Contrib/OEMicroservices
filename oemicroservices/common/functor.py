@@ -20,7 +20,7 @@
 # under the License.
 
 from openeye.oechem import *
-
+from openeye.oedepict import *
 
 class OEHasResidueName(OEUnaryAtomPred):
     """
@@ -77,3 +77,51 @@ def generate_ligand_functor(chain=None, resi=None, resn=None):
     if resn is not None:
         functor = OEAndAtom(functor, OEHasResidueName(resn))
     return functor
+
+
+class ApplyAtomLabelsFunctor(OEDisplayAtomPropBase):
+    """
+    Functor for assigning atom labels by atom index using a dictionary of {index: label pairs}, e.g. {1:"label", ...}
+    :param atom_labels: a dict of OE labels where the keys are the atom index (ints) and the values are the atom labels
+        :param index_start: the starting atom index as an integer (0 or 1)
+    :type: dict
+    """
+    def __init__(self, atom_labels, index_start):
+        OEDisplayAtomPropBase.__init__(self)
+        self.atom_labels = atom_labels
+        self.index_start = index_start
+
+    def __call__(self, atom):
+        if atom.GetIdx() + self.index_start in self.atom_labels:
+            return self.atom_labels[atom.GetIdx() + self.index_start]
+        return ""
+
+    def CreateCopy(self):
+        # __disown__ is required to allow C++ to take
+        # ownership of this object and its memory
+        copy = ApplyAtomLabelsFunctor(self.atom_labels, self.index_start)
+        return copy.__disown__()
+
+
+class ApplyBondLabelsFunctor(OEDisplayBondPropBase):
+    """
+    Functor for assigning bond labels by bond index using a dictionary of {index: label pairs}, e.g. {1:"label", ...}
+    :param bond_labels: a dict of OE labels where the keys are the bond index (ints) and the values are the bond labels
+    :param index_start: the starting atom index as an integer (0 or 1)
+    :type: dict
+    """
+    def __init__(self, bond_labels, index_start):
+        OEDisplayBondPropBase.__init__(self)
+        self.bond_labels = bond_labels
+        self.index_start = index_start
+
+    def __call__(self, bond):
+        if bond.GetIdx() + self.index_start in self.bond_labels:
+            return self.bond_labels[bond.GetIdx() + self.index_start]
+        return ""
+
+    def CreateCopy(self):
+        # __disown__ is required to allow C++ to take
+        # ownership of this object and its memory
+        copy = ApplyBondLabelsFunctor(self.bond_labels, self.index_start)
+        return copy.__disown__()

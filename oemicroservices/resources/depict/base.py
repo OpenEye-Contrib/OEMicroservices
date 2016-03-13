@@ -23,26 +23,52 @@ from flask.ext.restful import reqparse
 
 ########################################################################################################################
 #                                                                                                                      #
-#                                             Common parser for images                                                 #
+#                                       Common parser for images in v1 APIs                                            #
 #                                                                                                                      #
 ########################################################################################################################
 
-depictor_base_arg_parser = reqparse.RequestParser()
+depictor_base_arg_parser_v1 = reqparse.RequestParser()
 # If we should reparse connectivity, aromaticity, stereochemistry, hydrogens and formal charges
-depictor_base_arg_parser.add_argument('reparse', type=bool, default=False, location='args')
+depictor_base_arg_parser_v1.add_argument('reparse', type=bool, default=False, location='args')
 # If we should keep the molecule title (if using an SDF or other file format with titles)
-depictor_base_arg_parser.add_argument('keeptitle', type=bool, default=False, location='args')
+depictor_base_arg_parser_v1.add_argument('keeptitle', type=bool, default=False, location='args')
 # The title location (top or bottom), if we have a title
-depictor_base_arg_parser.add_argument('titleloc', type=str, default='top', location='args')
+depictor_base_arg_parser_v1.add_argument('titleloc', type=str, default='top', location='args')
 # The image format (png, svg, pdf, etc.)
-depictor_base_arg_parser.add_argument('format', type=str, default='png', location='args')
+depictor_base_arg_parser_v1.add_argument('format', type=str, default='png', location='args')
 # The molecule title
-depictor_base_arg_parser.add_argument('title', type=str, default='', location='args')
+depictor_base_arg_parser_v1.add_argument('title', type=str, default='', location='args')
 # If the molecule is gzipped then base64 encoded
-depictor_base_arg_parser.add_argument('gz', type=bool, default=False, location='args')
+depictor_base_arg_parser_v1.add_argument('gz', type=bool, default=False, location='args')
 # Bond scales with the size of the image
-depictor_base_arg_parser.add_argument('scalebonds', type=bool, default=False, location='args')
+depictor_base_arg_parser_v1.add_argument('scalebonds', type=bool, default=False, location='args')
 # Background color of image
-depictor_base_arg_parser.add_argument('background', type=str, default="#ffffff00", location='args')
+depictor_base_arg_parser_v1.add_argument('background', type=str, default="#ffffff00", location='args')
 # Debug mode
-depictor_base_arg_parser.add_argument('debug', type=bool, default=False, location='args')
+depictor_base_arg_parser_v1.add_argument('debug', type=bool, default=False, location='args')
+
+########################################################################################################################
+#                                                                                                                      #
+#                                       Common parser for images in v2 APIs                                            #
+#                                                                                                                      #
+########################################################################################################################
+
+depictor_base_arg_parser_v2 = reqparse.RequestParser()
+# If we should reparse connectivity, aromaticity, stereochemistry, hydrogens and formal charges
+depictor_base_arg_parser_v2.add_argument('reparse', type=bool, default=False)
+# If we should keep the molecule title (if using an SDF or other file format with titles)
+depictor_base_arg_parser_v2.add_argument('keep-title', type=bool, default=False)
+# The title location (top or bottom), if we have a title
+depictor_base_arg_parser_v2.add_argument('titleloc', type=str, default='top')
+# The image format (png, svg, pdf, etc.)
+depictor_base_arg_parser_v2.add_argument('image-format', type=str, default='png')
+# The molecule title
+depictor_base_arg_parser_v2.add_argument('title', type=str, default='')
+# If the molecule is gzipped then base64 encoded
+depictor_base_arg_parser_v2.add_argument('gz', type=bool, default=False)
+# Bond scales with the size of the image
+depictor_base_arg_parser_v2.add_argument('scale-bonds', type=bool, default=False)
+# Background color of image
+depictor_base_arg_parser_v2.add_argument('background', type=str, default="#ffffff00")
+# Debug mode
+depictor_base_arg_parser_v2.add_argument('debug', type=bool, default=False)
