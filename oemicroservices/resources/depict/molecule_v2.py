@@ -31,7 +31,7 @@ from oemicroservices.common.functor import (
     ApplyAtomLabelsFunctor,
     ApplyBondLabelsFunctor)
 
-from oemicroservices.resources.depict.base import depictor_base_arg_parser_v2
+from oemicroservices.resources.depict.base import depictor_base_arg_parser
 from oemicroservices.common.util import (
     render_error_image,
     get_image_mime_type,
@@ -56,11 +56,13 @@ from oemicroservices.common.util import (
 ########################################################################################################################
 
 # Extend the standard image_parser
-depictor_arg_parser = depictor_base_arg_parser_v2.copy()
+depictor_arg_parser = depictor_base_arg_parser.copy()
 # Only for POST: the molecule string
 depictor_arg_parser.add_argument('molecule', type=str, default='')
 # The format of the molecule string
-depictor_arg_parser.add_argument('molecule-format', type=str, default='smiles')
+depictor_arg_parser.add_argument('molfmt', type=str, default='smiles')
+# The image format (png, svg, pdf, etc.) for V2 of API
+depictor_arg_parser.add_argument('imgfmt', type=str, default='png', location='args')
 # The image size (assuming a square image)
 depictor_arg_parser.add_argument('size', type=int, default=400)
 # The image width - uses size by default in parsing logic below.  If defined, overrides size.
@@ -136,7 +138,7 @@ class MoleculeDepictorV2(Resource):
         # return Response(json.dumps(args), status=400, mimetype='application/json')
         try:
             # Read the molecule
-            mol = read_molecule_from_string(molecule, args['molecule-format'], bool(args['gz']), bool(args['reparse']))
+            mol = read_molecule_from_string(molecule, args['molfmt'], bool(args['gz']), bool(args['reparse']))
             # fix highlight-atoms sets coming from URL (comma-separated values to int list)
             args['highlight-atoms'] = fix_highlight_atoms_from_get(args['highlight-atoms'], args['index-start'])
             # Render the image
@@ -164,10 +166,9 @@ class MoleculeDepictorV2(Resource):
                 molecule = args['molecule']
             else:
                 molecule = request.data.decode("utf-8")
-
         try:
             # Read the molecule
-            mol = read_molecule_from_string(molecule, args['molecule-format'], bool(args['gz']), bool(args['reparse']))
+            mol = read_molecule_from_string(molecule, args['molfmt'], bool(args['gz']), bool(args['reparse']))
 
             # unpack highlight-atoms-JSON data into paired lists (so data has same format as GET request)
             json_data = args['highlight-atoms-JSON']
@@ -206,9 +207,9 @@ class MoleculeDepictorV2(Resource):
         width = args['width'] if args['width'] else size               # Image width
         height = args['height'] if args['height'] else size            # Image height
         title = args['title']                                          # Image title
-        use_molecule_title = bool(args['keep-title'])                  # Use the molecule title in the molecule file
-        bond_scaling = bool(args['scale-bonds'])                       # Bond width scales with size
-        image_format = args['image-format']                            # The output image format
+        use_molecule_title = bool(args['keeptitle'])                   # Use the molecule title in the molecule file
+        bond_scaling = bool(args['scalebonds'])                        # Bond width scales with size
+        image_format = args['imgfmt']                                  # The output image format
         image_mimetype = get_image_mime_type(image_format)             # MIME type corresponding to the image format
         title_location = get_title_location(args['titleloc'])          # The title location (if we have a title)
         background = get_color_from_rgba(args['background'])           # Background color

@@ -229,6 +229,435 @@
                 }
             }
         },
+        "/v2/depict/structure/{molecule}": {
+            "get": {
+                "description": "Render 2D depictions of small molecules using the OEDepict Toolkit. This resource requires only the {molecule} parameter in either the URL or body if using a SMILES string.  If molecule is in another format use the molfmt query string to indicate string type (pdf, sdf, etc.) Remember that URLs have a 2083 character limit, so use the POST method  if you plan to use lengthy molecule files. If the debug parameter is  false or not specified, then any error will result in a 200 OK response  and a PNG image with an error message rendered onto it. This allows  pages to render without missing images, even if there are errors. Version 2 of this API now allows highlighting atom sets by color.  To do atom labeling, please see the POST methods below.\n",
+                "parameters": [
+                    {
+                        "name": "molecule",
+                        "type": "string",
+                        "description": "String representation of the molecule",
+                        "in": "path",
+                        "required": true,
+                        "default": ""
+                    },
+                    {
+                        "$ref": "#/parameters/molFmtParam"
+                    },
+                    {
+                        "$ref": "#/parameters/imgFmtParam"
+                    },
+                    {
+                        "$ref": "#/parameters/reparseParam"
+                    },
+                    {
+                        "$ref": "#/parameters/keepTitleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/titleLocParam"
+                    },
+                    {
+                        "$ref": "#/parameters/titleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/gzParam"
+                    },
+                    {
+                        "$ref": "#/parameters/scaleBondsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/backgroundParam"
+                    },
+                    {
+                        "$ref": "#/parameters/debugParam"
+                    },
+                    {
+                        "$ref": "#/parameters/nameParam"
+                    },
+                    {
+                        "$ref": "#/parameters/widthParam"
+                    },
+                    {
+                        "$ref": "#/parameters/heightParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightSSParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightColorParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightStyleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightNestParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightScaleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightAtomsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightAtomsColorsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/indexStartParam"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "Image",
+                            "description": "The molecule image",
+                            "format": "byte array"
+                        }
+                    },
+                    "400": {
+                        "description": "Error (must use debug=true)",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/depict/structure/": {
+            "post": {
+                "description": "** Note that this API should be used without the trailing slash ** (multiple POST APIs for the same route are not enabled by Swagger). In this implementation the molecule is posted as a string in the body of the request and all other parameters are set via the URL.  This method  can be used to POST structures that would exceed the 2083 character  limit within URLs.\n",
+                "parameters": [
+                    {
+                        "name": "molecule",
+                        "in": "body",
+                        "required": true,
+                        "description": "The molecule file",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "$ref": "#/parameters/molFmtParam"
+                    },
+                    {
+                        "$ref": "#/parameters/imgFmtParam"
+                    },
+                    {
+                        "$ref": "#/parameters/reparseParam"
+                    },
+                    {
+                        "$ref": "#/parameters/keepTitleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/titleLocParam"
+                    },
+                    {
+                        "$ref": "#/parameters/titleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/gzParam"
+                    },
+                    {
+                        "$ref": "#/parameters/scaleBondsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/backgroundParam"
+                    },
+                    {
+                        "$ref": "#/parameters/debugParam"
+                    },
+                    {
+                        "$ref": "#/parameters/nameParam"
+                    },
+                    {
+                        "$ref": "#/parameters/widthParam"
+                    },
+                    {
+                        "$ref": "#/parameters/heightParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightSSParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightColorParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightStyleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightNestParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightScaleParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightAtomsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/highlightAtomsColorsParam"
+                    },
+                    {
+                        "$ref": "#/parameters/indexStartParam"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "Image",
+                            "description": "The molecule image",
+                            "format": "byte array"
+                        }
+                    },
+                    "400": {
+                        "description": "Error (must use debug=true)",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
+        "/v2/depict/structure": {
+            "post": {
+                "description": "This is a JSON POST convenience method for image rendering.  The  molecule field is obviously required and all other parameters are the same as the above methods with the exception of the highlight-atoms-JSON object.\n",
+                "parameters": [
+                    {
+                        "name": "jsonString",
+                        "in": "body",
+                        "description": "Molecule string (optional) and rendering settings",
+                        "required": false,
+                        "schema": {
+                            "type": "object",
+                            "required": [
+                                "molecule"
+                            ],
+                            "properties": {
+                                "molecule": {
+                                    "type": "string",
+                                    "description": "String representation of molecule (optional) in case not loaded via path"
+                                },
+                                "molfmt": {
+                                    "type": "string",
+                                    "default": "smiles",
+                                    "enum": [
+                                        "smiles",
+                                        "smi",
+                                        "ism",
+                                        "usm",
+                                        "pdb",
+                                        "mdl",
+                                        "mol",
+                                        "oeb",
+                                        "xyz",
+                                        "skc",
+                                        "sdf",
+                                        "cdx",
+                                        "mol2",
+                                        "mmod"
+                                    ],
+                                    "description": "format of the molecule string"
+                                },
+                                "imgfmt": {
+                                    "type": "string",
+                                    "default": "png",
+                                    "enum": [
+                                        "png",
+                                        "svg",
+                                        "ps",
+                                        "pdf"
+                                    ],
+                                    "description": "format of the output image"
+                                },
+                                "reparse": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Reparse the molecule chemistry"
+                                },
+                                "keeptitle": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Keep title on molecule"
+                                },
+                                "titleloc": {
+                                    "type": "string",
+                                    "default": "top",
+                                    "enum": [
+                                        "top",
+                                        "bottom"
+                                    ],
+                                    "description": "Location of title relative to molecule"
+                                },
+                                "title": {
+                                    "type": "string",
+                                    "default": "",
+                                    "description": "The molecule title"
+                                },
+                                "gz": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Whether or not the molecule string is gzipped"
+                                },
+                                "scalebonds": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Scale bond width with molecule size"
+                                },
+                                "background": {
+                                    "type": "string",
+                                    "default": "ffffff00",
+                                    "description": "Hex RGB (RRGGBB) or hex RGBA (RRGGBBAA) string that defines the background"
+                                },
+                                "debug": {
+                                    "type": "boolean",
+                                    "default": false,
+                                    "description": "Return a JSON response on error rather than an error image"
+                                },
+                                "size": {
+                                    "type": "integer",
+                                    "default": 400,
+                                    "description": "Size of square image in pixels.  To set a non-square image size, use width and height"
+                                },
+                                "width": {
+                                    "type": "integer",
+                                    "description": "Width of image.  If null defaults to size parameter."
+                                },
+                                "height": {
+                                    "type": "integer",
+                                    "description": "Height of image.  If null defaults to size parameter."
+                                },
+                                "highlight-ss": {
+                                    "type": [
+                                        "array",
+                                        "string"
+                                    ],
+                                    "items": {
+                                        "type": "string"
+                                    }
+                                },
+                                "highlight-color": {
+                                    "type": [
+                                        "array",
+                                        "string"
+                                    ],
+                                    "items": {
+                                        "type": "string"
+                                    },
+                                    "default": "default",
+                                    "enum": [
+                                        "default",
+                                        "contrast",
+                                        "deep",
+                                        "light",
+                                        "vivid"
+                                    ],
+                                    "description": "One or more Hex RGB (RRGGBB) colors for highlighting substructures or one of the following OE default sets. default, contrast, deep, light (default), vivid."
+                                },
+                                "highlight-style": {
+                                    "type": "string",
+                                    "default": "default",
+                                    "enum": [
+                                        "default",
+                                        "ballandstick",
+                                        "stick",
+                                        "lasso",
+                                        "color",
+                                        "cogwheel"
+                                    ],
+                                    "description": "The molecule highlight style as one of the following default, ballandstick, stick, lasso, color, cogwheel (default)"
+                                },
+                                "highlight-nest": {
+                                    "type": "boolean",
+                                    "default": true,
+                                    "description": "If highlighting overlaps, whether to nest highlights or keep all the same width"
+                                },
+                                "highlight-scale": {
+                                    "type": "integer",
+                                    "default": 0,
+                                    "description": "Relative scale of highlighting.  Default is 0 and goes up from there."
+                                },
+                                "highlight-atoms-JSON": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object",
+                                        "properties": {
+                                            "atom-indices": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "integer"
+                                                },
+                                                "description": "List of atom numbers to highlight as a set"
+                                            },
+                                            "color": {
+                                                "type": "string",
+                                                "description": "Hex RGB color to highlight with"
+                                            }
+                                        }
+                                    },
+                                    "description": "Array of JSON objects containing atom index set / color pairs"
+                                },
+                                "atom-labels": {
+                                    "type": "array",
+                                    "maxItems": 2,
+                                    "minItems": 2,
+                                    "items": {
+                                        "type": [
+                                            "integer",
+                                            "string"
+                                        ]
+                                    },
+                                    "description": "Array of array doublets where each set consists of an [atom number, label] pair"
+                                },
+                                "bond-labels": {
+                                    "type": "array",
+                                    "maxItems": 2,
+                                    "minItems": 2,
+                                    "items": {
+                                        "type": [
+                                            "integer",
+                                            "string"
+                                        ]
+                                    },
+                                    "description": "Array of array doublets where each set consists of a [bond number, label] pair"
+                                },
+                                "label-color": {
+                                    "type": "string",
+                                    "default": "#404040",
+                                    "description": "Color of atom / bond label text, default is"
+                                },
+                                "label-style": {
+                                    "type": "string",
+                                    "default": "default",
+                                    "enum": [
+                                        "default",
+                                        "normal",
+                                        "italic",
+                                        "bold"
+                                    ],
+                                    "description": "Font style of atom / bond labels (default is normal)"
+                                }
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successful response",
+                        "schema": {
+                            "title": "Image",
+                            "description": "The molecule image",
+                            "format": "byte array"
+                        }
+                    },
+                    "400": {
+                        "description": "Error (must use debug=true)",
+                        "schema": {
+                            "$ref": "#/definitions/Error"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/depict/interaction": {
             "post": {
                 "description": "Render a receptor-ligand interaction map (also known as a 2.5D image). This resource requires a POST with a specific JSON string that contains the split ligand and receptor. The individual file formats of the ligand and receptor are specified in the string, as well as if they are compressed. If you do not have the ligand and receptor split, consider using the '/v1/depict/interaction/search/{fmt}' resource, which has query parameters that allow the ligand to specified within a single file that contains both the ligand and receptor. Similar to the other ligand depiction resources, if debug is not specified, any error will still produce a 200 OK response and a PNG image with an error message rendered onto it. This allows pages to render without missing images, even if there are errors.\n",
@@ -548,7 +977,7 @@
             "default": false
         },
         "keepTitleParam": {
-            "name": "keepTitle",
+            "name": "keeptitle",
             "description": "Keep any existing molecule title",
             "required": false,
             "type": "boolean",
@@ -556,7 +985,7 @@
             "default": false
         },
         "titleLocParam": {
-            "name": "titleLoc",
+            "name": "titleloc",
             "in": "query",
             "required": false,
             "description": "The location of the title (if one exists)",
@@ -583,7 +1012,7 @@
             "default": false
         },
         "scaleBondsParam": {
-            "name": "scaleBonds",
+            "name": "scalebonds",
             "in": "query",
             "required": false,
             "description": "Scale bond width with molecule size",
@@ -628,6 +1057,137 @@
                 "mmod"
             ],
             "type": "string"
+        },
+        "molFmtParam": {
+            "name": "molfmt",
+            "in": "query",
+            "required": false,
+            "default": "smiles",
+            "description": "The file format of the molecule string",
+            "enum": [
+                "smiles",
+                "smi",
+                "ism",
+                "usm",
+                "pdb",
+                "mdl",
+                "mol",
+                "oeb",
+                "xyz",
+                "skc",
+                "sdf",
+                "cdx",
+                "mol2",
+                "mmod"
+            ],
+            "type": "string"
+        },
+        "imgFmtParam": {
+            "name": "imgfmt",
+            "description": "The resulting image format",
+            "required": false,
+            "default": "png",
+            "type": "string",
+            "in": "query",
+            "enum": [
+                "png",
+                "svg",
+                "ps",
+                "pdf"
+            ]
+        },
+        "nameParam": {
+            "name": "size",
+            "type": "integer",
+            "description": "The image size for a square image.",
+            "in": "query",
+            "required": false,
+            "default": 400
+        },
+        "widthParam": {
+            "name": "width",
+            "type": "integer",
+            "description": "The image width.  If height is set, default is size param.",
+            "in": "query",
+            "required": false
+        },
+        "heightParam": {
+            "name": "height",
+            "type": "integer",
+            "description": "The image height.  If width is set, default is size param.",
+            "required": false,
+            "in": "query"
+        },
+        "highlightSSParam": {
+            "name": "highlight-ss",
+            "in": "query",
+            "type": "string",
+            "collectionFormat": "multi",
+            "description": "SMILES substructure to highlight (accepts multiple)",
+            "required": false
+        },
+        "highlightColorParam": {
+            "name": "highlight-color",
+            "in": "query",
+            "type": "string",
+            "collectionFormat": "multi",
+            "description": "One or more Hex RGB (RRGGBB) colors for highlighting substructures or one of the following OE default sets. default, contrast, deep, light (default), vivid.",
+            "default": "default",
+            "enum": [
+                "default",
+                "contrast",
+                "deep",
+                "light",
+                "vivid"
+            ]
+        },
+        "highlightStyleParam": {
+            "name": "highlight-style",
+            "description": "The molecule highlight style as one of the following default, ballandstick, stick, lasso, color, cogwheel (default)",
+            "required": false,
+            "type": "string",
+            "default": "default",
+            "in": "query"
+        },
+        "highlightNestParam": {
+            "name": "highlight-nest",
+            "description": "If highlighting overlaps, whether to nest highlights or keep all the same width",
+            "required": false,
+            "type": "boolean",
+            "default": true,
+            "in": "query"
+        },
+        "highlightScaleParam": {
+            "name": "highlight-scale",
+            "description": "Relative scale of highlighting.  Default is 0 and goes up from there.",
+            "required": false,
+            "type": "integer",
+            "default": 0,
+            "in": "query"
+        },
+        "highlightAtomsParam": {
+            "name": "highlight-atoms",
+            "description": "Common set of atom numbers to highlight, separated by commas (and URL encoded).  Multiple atom sets are allowed.",
+            "collectionFormat": "multi",
+            "required": false,
+            "type": "string",
+            "in": "query"
+        },
+        "highlightAtomsColorsParam": {
+            "name": "highlight-atoms-colors",
+            "description": "Optional colors to use to highlight atom sets.  If multiple sets are provided in highlight-atoms, corresponding highlight-atoms-colors should be provided in the same order.  Where colors are not available, or where array lengths don't match, default coloring will fall back to the highlight-color parameter.",
+            "collectionFormat": "multi",
+            "required": false,
+            "type": "string",
+            "in": "query"
+        },
+        "indexStartParam": {
+            "name": "index-start",
+            "description": "Starting point for atom indexing",
+            "required": false,
+            "type": "integer",
+            "default": 0,
+            "in": "query"
         }
     }
 }

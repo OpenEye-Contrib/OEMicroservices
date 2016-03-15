@@ -29,7 +29,7 @@ from openeye.oegrapheme import *
 
 from openeye.oedocking import *
 
-from oemicroservices.resources.depict.base import depictor_base_arg_parser_v1
+from oemicroservices.resources.depict.base import depictor_base_arg_parser
 from oemicroservices.common.functor import generate_ligand_functor
 from oemicroservices.common.util import (
     render_error_image,
@@ -45,7 +45,7 @@ from oemicroservices.common.util import (
 ########################################################################################################################
 
 # Extend the standard image_parser
-interaction_arg_parser = depictor_base_arg_parser_v1.copy()
+interaction_arg_parser = depictor_base_arg_parser.copy()
 # The image width
 interaction_arg_parser.add_argument('width', type=int, default=800, location='args')
 # The image height
