@@ -44,15 +44,27 @@ Note that in Python 2.x you might need the "trollius" package to use multiple Gu
 
 **IMPORTANT:** The complete API can be found in the *docs* directory.
 
-Some basic examples are provided here and they all assume that you are running on a local server (127.0.0.1) on port 
-5000. If you are running on another server, you'll want to replace the 127.0.0.1:5000 with the correct server/port 
-combination. Without further ado, here  are some simple examples:
+Some basic examples are provided here and they all assume that you are running on a local server (127.0.0.1) on port 5000. If you are running on another server, you'll want to replace the 127.0.0.1:5000 with the correct server/port combination. Without further ado, here  are some simple examples:
 
 #### Small Molecule Rendering (GET)
-*URL:* http://127.0.0.1:5000/v1/depict/structure/{format}?val={molecule_string}
+*URL:* http://127.0.0.1:5000/v2/depict/structure/{molecule}
 
-Where `{format}` is the format of the `{molecule_string}` defined by the *val* query parameter. Both `{format}` and 
-`{molecule_string}` are required. The following is a list of possible values for `{format}`:
+*Note that the rendering API has been versioned to v2. v1 still exists but is deprecated.*
+
+Version 2 of the API assumes SMILES rendering, making {molecule} the only required parameter.  For example, to render the structure of Januvia (PNG default).  *Note that the molecule string MUST be URL encoded!*   Be careful of the 2083
+character URL limit. If you think you might exceed this limit, use the POST method for this resource instead of GET.
+
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F
+
+Render a larger Januvia PNG and scale the bonds with the size of the structure using `size` and `scalebonds`:
+
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F?size=800&scalebonds=true
+
+Render the structure of Januvia as an SVG using `imgfmt`.  (Allowed types are png, svg, ps, & pdf):
+
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F?imgfmt=svg
+
+To render structure strings of different format types, set the `molfmt` query string.  Below are the allowed types:
 
 - cdx : ChemDraw file
 - ism : Canonical isomeric SMILES
@@ -69,57 +81,41 @@ Where `{format}` is the format of the `{molecule_string}` defined by the *val* q
 - usm : Arbitrary SMILES
 - xyz : XYZ chemical file
 
-The *val* query parameter that defines `{molecule_string}` is the complete URL encoded molecule string. For SMILES, this 
-could be as simple as just c1ccccc1; but for PDB, this would be the entire PDB file URL encoded. Be careful of the 2083 
-character URL limit. If you think you might exceed this limit, use the POST method for this resource instead of GET.
 
-Render the structure of Januvia (PNG default): 
+Render the structure of Januvia as a PDF with a caption under the image using `imgfmt`, `title`, and `titleloc`:
 
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F
-
-Render a larger Januvia PNG and scale the bonds with the size of the structure:
-
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F&height=800&width=800&scalebonds=true
-
-Render the structure of Januvia as an SVG:
-
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F&format=svg
-
-Render the structure of Januvia as a PDF with a caption under the image:
-
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F&format=pdf&title=Januvia&titleloc=bottom
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F?imgfmt=pdf&title=Januvia&titleloc=bottom
 
 Render the structure of Januvia with a substructure highlight in stick mode:
 
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F&highlight=C1CNCcn1&highlightstyle=stick
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F?highlight-ss=C1CNCcn1&highlight-style=stick
 
 Render the structure of Januvia with a partially transparent purple-ish looking background:
 
-    http://127.0.0.1:5000/v1/depict/structure/smiles?val=Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F&background=3300f520
+    http://127.0.0.1:5000/v2/depict/structure/Fc1cc(c(F)cc1F)C%5BC%40%40H%5D(N)CC(%3DO)N3Cc2nnc(n2CC3)C(F)(F)F?background=3300f520
 
-Render the structure of Januvia using a gzipped and base64 encoded SD file (Note the *gz=true* parameter implies 
+Render the structure of Januvia using a gzipped and base64 encoded SD file (Note the *gz=true* parameter implies
 gzipping, then base64 encoding, then finally URL encoding):
 
-    http://127.0.0.1:5000/v1/depict/structure/sdf?format=svg&gz=true&val=H4sIAIZng1UC/6VVMW7DMAzc/QoNXSOQlChKc9KiS9OtPyjQpf9fS1m205gCWiuGEQhn8nJ3lOXJudP78/nr8/sECTMyASNdpslRcQGdA1evtrjdpRT3QQAw6cMTegk51brgSwlSV%2BD1KbgXt%2Bvs3jML%2BQRxYYn3LOdjLGkWTQ%2BwqIKkFqtzX3JbHWeJPkSkVUtbHWdhrzOBVYvEsXSrlrylm%2BJwLsJlnTTjOEucFcQ9y8uxGQm03vEZkWeV0HpjoX4u%2BDcLAi0zCnyn5fWIIyizoxP4IAy/WK7/Z6lvIy0sAHcsB3IBn5NsuayrARaB2HLZsbz/m2Xt6K2uR1hyyksvg4ztF1fTTVu6MJaungephNx6A%2BKgo%2BApc25aGEIaY9m06M4JmOOjuaD2Cj44I2VRR2On922XzFo4j7Ho2wiU29tNqfAoS%2BE13ZKAh846nZF%2BlmU5rySPfQNUi%2B41aScN0ZgWHSztDsRphvL8u0eDrVUo2lqF2NYqlLqoWAaZNexrFSoWjQ7BoAohWhQdNse4Q0O3NlpU/816UwiTcVFRsbXiiHsoWscKoXWsEIUuCkaDQmRzUIjI1lKPVyGyOSjUcVEZ7IwVIumiuYsax2/OPV8v05Ne0w9dF3x55QoAAA%3D%3D
+    http://127.0.0.1:5000/v2/depict/structure/H4sIAIZng1UC/6VVMW7DMAzc/QoNXSOQlChKc9KiS9OtPyjQpf9fS1m205gCWiuGEQhn8nJ3lOXJudP78/nr8/sECTMyASNdpslRcQGdA1evtrjdpRT3QQAw6cMTegk51brgSwlSV%2BD1KbgXt%2Bvs3jML%2BQRxYYn3LOdjLGkWTQ%2BwqIKkFqtzX3JbHWeJPkSkVUtbHWdhrzOBVYvEsXSrlrylm%2BJwLsJlnTTjOEucFcQ9y8uxGQm03vEZkWeV0HpjoX4u%2BDcLAi0zCnyn5fWIIyizoxP4IAy/WK7/Z6lvIy0sAHcsB3IBn5NsuayrARaB2HLZsbz/m2Xt6K2uR1hyyksvg4ztF1fTTVu6MJaungephNx6A%2BKgo%2BApc25aGEIaY9m06M4JmOOjuaD2Cj44I2VRR2On922XzFo4j7Ho2wiU29tNqfAoS%2BE13ZKAh846nZF%2BlmU5rySPfQNUi%2B41aScN0ZgWHSztDsRphvL8u0eDrVUo2lqF2NYqlLqoWAaZNexrFSoWjQ7BoAohWhQdNse4Q0O3NlpU/816UwiTcVFRsbXiiHsoWscKoXWsEIUuCkaDQmRzUIjI1lKPVyGyOSjUcVEZ7IwVIumiuYsax2/OPV8v05Ne0w9dF3x55QoAAA%3D%3D?molfmt=sdf&format=svg&gz=true
 
 #### Small Molecule Rendering (POST)
-*URL:* http://127.0.0.1:5000/v1/depict/structure/{format}
+*URL:* http://127.0.0.1:5000/v2/depict/structure
 
-A POST to this resource does not require a *val* query parameter, because the raw molecule file is expected in the body 
-of the POST. This allows more verbose molecule files to be rendered as it does not suffer from the 2083 character URL 
+A POST to this resource does not require a {molecule} query parameter, because the raw molecule file is expected in the body
+of the POST. This allows more verbose molecule files to be rendered as it does not suffer from the 2083 character URL
 length limit.
 
-Essentially all of the examples above work here, except that instead of *val*=..., you just shove that string into the
-POST body. Here is an example raw HTTP POST request for Januvia in SD format without the gzipping and base64 encoding:
+Essentially all of the examples above work here, except that instead of placing {molecule} in the URL you just shove that string into the POST body. Here is an example raw HTTP POST request for Januvia in SD format without the gzipping and base64 encoding:
 
-    POST http://127.0.0.1:5000/v1/depict/structure/sdf?format=svg HTTP/1.1
+    POST http://127.0.0.1:5000/v2/depict/structure/?imgfmt=svg HTTP/1.1
     Content-Type: text/plain
     Host: 127.0.0.1:5000
     Content-Length: 2853
-    
-    
+
+
       -OEChem-06181521172D
-    
+
      29 31  0     1  0  0  0  0  0999 V2000
        -1.7386    3.9937    0.0000 F   0  0  0  0  0  0  0  0  0  0  0  0
        -2.6046    3.4937    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
@@ -184,6 +180,28 @@ POST body. Here is an example raw HTTP POST request for Januvia in SD format wit
     M  END
     $$$$
 
+There's an alternative POST method that allows embedding molecule strings as well as all query parameters into a single JSON object.  In this example, we're rendering Januvia using a gzipped mol, highlighting atoms in the cogwheel style, and labeling  atom 13 with the atom number.
+
+    POST /v2/depict/structure HTTP/1.1
+    Host: 127.0.0.1:5000
+    Content-Type: application/json
+
+    {
+        "molecule": "H4sIAAAAAAACC21Vu5LbMAzs/RUsk8IMFwBJsbjCln03N+NHYV/6/EKa/H4A+gUqsS1Z3AVBAtwdrULYzPNh9/vXn8RgFAIn2q1WIaTHL7iH+6e1Fn5ySml1DPYQtvuPz1OYr5vtA5nPX6frJdAUdGBfjLGb6/n4QBDeA0W2rGuKuXHuMx40Kc0xMeWw5kgt00Bzn10aENbQf5kGWsKss5nEcnMrt9zz+8cbP2OyxpTIddIUEiuIhxRF6Rw5ZzYahDrQNZyeNMUmqfxniUlzSJRae43IqQ05muaQ2PLEVkSqGGkk5UsEUzMeLcvIw1WgZeaEkSfla5SEYYtPmjX9nXYFjhVAwjm0SEK9DSQ8tgHWxSkqzbcuyoIvjs9xehzFk7c+IkUqVmSJCdOiSOthi2ILKy9Tk+c26RXVXFSNRU9zVFNSvcAUYb1usaGOgiHrJVSHMFpk0WqyVgK6fCU9i6TCzONhkSmyxSLlnn/sA5kidZ4U4fsKo9wo+4BJGyKLEorfgtW4OAqqrxL6/MUC07MFYvNrw9iC/Wk3GPRm2e35tHtZFuosOI/amJwpbczOhVALiHMc7GLnMeiVnamgV3H+sTHgHGMZq7cIKTh5T8DQ5l1AHR6UD8NdYtheDScvbfQbezVTh8QLGIYje8mi34rX5w2qC39R72ozzkkRJgc0Lz8YToPeblD1GiMLJXhVoePkdXSD2CuHLJTEqwUWSq+y1KDUQ19ldU1oqNuEqchr5v6SOB8O+/n6eT498OPuoH8/Ltf9Znvpuru8fbMeffeZ/p3X0fsrR59XfwGNRLQQzQYAAA==",
+        "molfmt": "sdf",
+        "gz": true,
+        "size": 600,
+        "highlight-atoms-JSON": [{"atom-indices": [12,13,14],   "color": "#E88FA7"},
+                                 {"atom-indices": [14,15,17],   "color": "#A6B7FB"},
+                                 {"atom-indices": [0,1,2,3],    "color": "#A5BAFD"},
+                                 {"atom-indices": [6,7,8,9,10], "color": "#FF9595"}],
+        "highlight-style": "cogwheel",
+        "highlight-scale":1,
+        "atom-labels": [[13, "13"]]
+    }
+
+
+
 #### Protein-Ligand Interaction Map (POST)
 *URL:* http://127.0.0.1:5000/v1/depict/interaction
 
@@ -206,8 +224,8 @@ A POST to this resource expects a JSON string in the POST body with the followin
 
 The *value* and *format* variables are necessary for both the ligand and receptor. The *value* variables contain the
 raw (JSON encoded) molecule file strings with file format specified by *format*. Many of the same query string
-parameters are valid for this resource (e.g. height, width). The legend is shown by default and can be hidden via the 
-legend boolean query parameter (e.g. http://...?legend=false). Don't forget to set the Content-Type of the HTTP POST to 
+parameters are valid for this resource (e.g. height, width). The legend is shown by default and can be hidden via the
+legend boolean query parameter (e.g. http://...?legend=false). Don't forget to set the Content-Type of the HTTP POST to
 application/json!
 
 #### Protein-Ligand Interaction Map With Ligand Search (POST)
@@ -233,7 +251,7 @@ Example locating Suvorexant in 4S0V (any of these will work providing the raw PD
     http://127.0.0.1:5000/v1/depict/interaction/search/pdb?resn=SUV&resi=2001&chain=A
 
 Lots of familiar query string parameters are valid here (e.g. height, width), the legend query parameter described
-above, and the similarly familiar gz (e.g. gz=true) parameter to indicate if the POST body has been gzipped and 
+above, and the similarly familiar gz (e.g. gz=true) parameter to indicate if the POST body has been gzipped and
 base64 encoded.
 
 #### Molecular File Format Conversion (POST)
@@ -275,6 +293,13 @@ There are no query string parameters available for this resource.
 Fork it and submit a pull request!
 
 ## History
+
+**2016-03-15 - Version 1.3**
+- Created v2 of the rendering API with the following additions
+    - Labeling atoms and bonds by number (available in JSON POST)
+    - Highlighting atom sets by atom number
+    - Overlapping highlighting is by default now nested so it's visible
+- Updated Swagger API documentation to reflect changes
 
 **2015-07-09 - Version 1.2**
 
