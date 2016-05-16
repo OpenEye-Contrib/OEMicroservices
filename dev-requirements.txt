@@ -1,0 +1,5 @@
+flask
+pytest
+
+--extra-index-url https://pypi.anaconda.org/OpenEye/simple
+OpenEye-toolkits
