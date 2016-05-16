@@ -1,6 +1,6 @@
 # Apache License 2.0
 #
-# Copyright (c) 2015 Scott Arne Johnson
+# Copyright (c) 2015-2016 Scott Arne Johnson
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the LICENSE file
@@ -22,6 +22,7 @@
 import json
 # noinspection PyUnresolvedReferences
 import sys
+import base64
 
 from flask.ext.restful import Resource, request
 from flask import Response
@@ -73,6 +74,8 @@ else:
 # }                                                                                                                    #
 ########################################################################################################################
 
+def is_gzip(payload):
+    return bool('gz' in payload['molecule']['output'] and payload['molecule']['output']['gz'])
 
 class MoleculeConvert(Resource):
     """
@@ -114,7 +117,7 @@ class MoleculeConvert(Resource):
         """
         # Parse the query options
         try:
-            # We exepct a JSON object in request.data with the protein and ligand data structures
+            # We expect a JSON object in request.data with the protein and ligand data structures
             payload = json.loads(request.data.decode("utf-8"))
             # Checks to make sure we have everything we need in payload
             self.__validate_schema(payload)
@@ -127,29 +130,28 @@ class MoleculeConvert(Resource):
             )
 
             # Prepare the molecule for writing
-            ofs = oemolostream()
-            if payload['molecule']['output']['format'] == "smiles":
-                ofs_format = OEFormat_SMI
-            else:
-                ofs_format = OEGetFileType(to_utf8(payload['molecule']['output']['format']))
-            if ofs_format == OEFormat_UNDEFINED:
-                raise Exception("Unknown output file type: " + payload['molecule']['output']['format'])
-            ofs.SetFormat(ofs_format)
-            ofs.openstring()
-            OEWriteMolecule(ofs, mol)
+            ofs_format = payload['molecule']['output']['format']
+            if ofs_format == "smiles":
+                ofs_format = ".smi"
 
-            # Get molecule output stream
-            if 'gz' in payload['molecule']['output'] and payload['molecule']['output']['gz']:
-                output = compress_string(ofs.GetString().decode('utf-8'))
-            else:
-                output = ofs.GetString().decode('utf-8')
+            format_type = OEGetFileType(ofs_format)
+            if format_type == OEFormat_UNDEFINED:
+                raise Exception("Unknown output file type: " + format)
+
+            if is_gzip(payload):
+                ofs_format += ".gz"
+            output = OEWriteMolToBytes(ofs_format, mol)
+
+            if OEIsBinary(format_type) or is_gzip(payload):
+                output = base64.b64encode(output)
+            output = output.decode("utf-8")
 
             return Response(json.dumps(
                 {
                     'molecule': {
                         'value': output,
                         'format': payload['molecule']['output']['format'],
-                        'gz': payload['molecule']['output']['gz'] if 'gz' in payload['molecule']['output'] else False
+                        'gz': is_gzip(payload)
                     }
                 }
             ), status=200, mimetype='application/json')

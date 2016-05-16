@@ -1,6 +1,6 @@
 # Apache License 2.0
 #
-# Copyright (c) 2015 Scott Arne Johnson
+# Copyright (c) 2015-2016 Scott Arne Johnson
 #
 # Licensed to the Apache Software Foundation (ASF) under one
 # or more contributor license agreements.  See the LICENSE file
@@ -22,6 +22,7 @@
 from unittest import TestCase
 import json
 import os
+import base64
 
 from openeye.oechem import *
 
@@ -117,7 +118,7 @@ class TestMoleculeConvert(TestCase):
             data=json.dumps({"molecule": {"value": target, "input": {"format": "pdb"}, "output": {"format": "sdf"}}}),
             headers={"content-type": "application/json"}
         )
-        self.assertEqual("200 OK", response.status)
+        self.assertEqual("200 OK", response.status, response.data)
 
         # Test the output schema
         payload = json.loads(response.data.decode('utf-8'))
@@ -190,3 +191,40 @@ class TestMoleculeConvert(TestCase):
 
         # Test that the two molecule strings are equal
         self.assertEqual(OECreateCanSmiString(reference), OECreateCanSmiString(mol))
+
+    def test_smi_to_cdx(self):
+        """
+        Test SMI to CDX conversion
+        """
+        smiles = "Fc1cc(c(F)cc1F)C[C@@H](N)CC(=O)N3Cc2nnc(n2CC3)C(F)(F)F"
+        # Perform the conversion to CDX
+        response = self.app.post(
+            '/v1/convert/molecule',
+            data=json.dumps({"molecule":
+                             {"value": smiles,
+                              "input": {"format": "smi"},
+                              "output": {"format": "cdx"}
+                              }
+                             }),
+            headers={"content-type": "application/json"}
+        )
+        self.assertEqual("200 OK", response.status, response.data)
+
+        # Test the output schema
+        payload = json.loads(response.data.decode('utf-8'))
+        self.assertIn('molecule', payload)
+        self.assertIn('value', payload['molecule'])
+        self.assertIn('gz', payload['molecule'])
+
+        # read the CDX file back into OEMol
+        cdx_data = base64.b64decode(payload['molecule']['value'])
+        converted_mol = OEMol()
+        self.assertTrue(OEReadMolFromBytes(converted_mol, ".cdx", cdx_data))
+
+        # parse the reference smiles into OEMol
+        smiles_mol = OEMol()
+        self.assertTrue(OESmilesToMol(smiles_mol, smiles))
+
+        self.assertEquals(OEMolToSmiles(smiles_mol), OEMolToSmiles(converted_mol))
+
+
