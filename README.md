@@ -1,5 +1,7 @@
 # OEMicroservices
 
+[![Build Status](https://travis-ci.org/OpenEye-Contrib/OEMicroservices.svg?branch=master)](https://travis-ci.org/OpenEye-Contrib/OEMicroservices)
+
 A collection of useful microservices developed using the OpenEye toolkits and deployed with Flask and Flask-RESTful.
 
 ## Installation
