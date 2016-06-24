@@ -22,6 +22,12 @@ To uninstall
 
 Tested in Anaconda Python 2.7.9 and 3.4.3.
 
+## Running in Docker
+
+It's not on Dockerhub yet, so you need to build the image first:
+`docker build -t oe-microservices .`
+And then run: `docker run -p 5000:5000 -v /path/to/oe_license.txt_:/tmp/oe_license.txt:ro oe-microservices`
+
 ## Usage
 
 ### Standalone Application
