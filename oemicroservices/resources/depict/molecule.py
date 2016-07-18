@@ -30,8 +30,41 @@ from openeye.oedepict import *
 from oemicroservices.resources.depict.schema import MoleculeDepctionRequest
 
 # from oemicroservices.resources.depict.schema import depictor_base_arg_parser
-from oemicroservices.common.functor import ApplyAtomLabelsFunctor, ApplyBondLabelsFunctor
+from oemicroservices.common.functor import ApplyAtomLabels, ApplyBondLabels
 import oemicroservices.common.util as util
+
+
+def __create_base_image_and_opts(mol, args):
+    """
+    Creates the base molecule image shared by API v1 and v2 to avoid repeated code
+    """
+    image = OEImage(args['width'], args['height'])
+    # Prepare the depiction
+    OEPrepareDepiction(mol, False, True)
+    opts = OE2DMolDisplayOptions(image.GetWidth(), image.GetHeight(), OEScale_AutoScale)
+    # Defaults for API v2 which have no effect on API v1
+    opts.SetAtomLabelFontScale(1.4)
+    opts.SetAtomPropLabelFontScale(1.4)
+    opts.SetBondPropLabelFontScale(1.4)
+    # If we provided a title
+    if args['title']:
+        mol.SetTitle(args['title'])
+        opts.SetTitleLocation(args['title-loc'])
+    # Else if we are throwing out titles
+    elif not args['keep-title']:
+        mol.SetTitle("")
+        opts.SetTitleLocation(OETitleLocation_Hidden)
+    # FIXME If highlighting by cogwheel, can't use transparent background (error in OEDepict)
+    if ('highlight-atoms' in args and args['highlight-atoms']) or ('highlight-ss' in args and args['highlight-ss']) \
+            and (args['highlight-style'] == OEHighlightByCogwheel):
+        args['background'].SetA(255)
+    # Other configuration options
+    opts.SetBondWidthScaling(args['bond-scaling'])
+    opts.SetBackgroundColor(args['background'])
+    return image, opts
+
+    # if ('highlight-atoms' in args and args['highlight-atoms']) or ('highlight-ss' in args and args['highlight-ss']) and args['highlight-style'] == OEHighlightByCogwheel:
+    #    background.SetA(255)
 
 ########################################################################################################################
 #                                                                                                                      #
@@ -132,36 +165,16 @@ class MoleculeDepictorV1(Resource):
 
         if not title_location:
             title_location = OETitleLocation_Top
-        # *********************************************************************
-        # *                      Create the Image                             *
-        # *********************************************************************
-        image = OEImage(width, height)
-        # Prepare the depiction
-        OEPrepareDepiction(mol, False, True)
-        opts = OE2DMolDisplayOptions(image.GetWidth(), image.GetHeight(), OEScale_AutoScale)
-
-        # If we provided a title
-        if title:
-            mol.SetTitle(title)
-            opts.SetTitleLocation(title_location)
-        # Else hide if we didn't provide a title and we're *not* using the molecule title
-        elif not use_molecule_title:
-            mol.SetTitle("")
-            opts.SetTitleLocation(OETitleLocation_Hidden)
-
-        # Other configuration options
-        opts.SetBondWidthScaling(bond_scaling)
-        opts.SetBackgroundColor(background)
-
+        # Create the image
+        image, opts = __create_base_image_and_opts(mol, args)
         # Prepare the display
         disp = OE2DMolDisplay(mol, opts)
-
-        # Do any substructure matching
-        if highlight:
-            for querySmiles in highlight:
+        # Do any substructure matching and highlighting
+        if args['highlight-ss']:
+            for querySmiles in args['highlight-ss']:
                 subs = OESubSearch(querySmiles)
                 for match in subs.Match(mol, True):
-                    OEAddHighlighting(disp, color, highlight_style, match)
+                    OEAddHighlighting(disp, args['highlight-color'], args['highlight-style'], match)
 
         # Render the image
         OERenderMolecule(image, disp)
@@ -311,6 +324,7 @@ class MoleculeDepictorV2(Resource):
                     args['molfmt'], args['gzip'], args['molecule']))
             else:
                 raise Exception("Invalid molecule")
+
         return Response(str(mol.NumAtoms()), status=200, mimetype='text/plain')
 
     # noinspection PyMethodMayBeStatic
@@ -387,11 +401,11 @@ class MoleculeDepictorV2(Resource):
         opts.SetBackgroundColor(background)
 
         # Do atom labels
-        atomlabel = ApplyAtomLabelsFunctor(atom_labels, index_start)
+        atomlabel = ApplyAtomLabels(atom_labels, index_start)
         opts.SetAtomPropertyFunctor(atomlabel)
 
         # Do bond labels
-        bondlabel = ApplyBondLabelsFunctor(bond_labels, index_start)
+        bondlabel = ApplyBondLabels(bond_labels, index_start)
         opts.SetBondPropertyFunctor(bondlabel)
 
         # Set color of atom and bond labels

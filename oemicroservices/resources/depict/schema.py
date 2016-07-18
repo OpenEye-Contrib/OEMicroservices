@@ -255,6 +255,15 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
         # API v1 used highlight instead of highlight-ss
         if 'highlight' in data:
             data['highlight-ss'] = data.pop('highlight')
+        # API v1 used highlightcolor instead of highlight-color
+        if 'highlightcolor' in data:
+            data['highlight-color'] = data.pop('highlightcolor')
+        # API v1 used highlightstyle instead of highlight-style
+        if 'highlightstyle' in data:
+            data['highlight-style'] = data.pop('highlightstyle')
+        # API v1 used keeptitle instead of keep-title
+        if 'keeptitle' in data:
+            data['keep-title'] = data.pop('keeptitle')
 
     # Static block
     # depictor_arg_parser = depictor_base_arg_parser.copy()

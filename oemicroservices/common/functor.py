@@ -79,7 +79,7 @@ def generate_ligand_functor(chain=None, resi=None, resn=None):
     return functor
 
 
-class ApplyAtomLabelsFunctor(OEDisplayAtomPropBase):
+class ApplyAtomLabels(OEDisplayAtomPropBase):
     """
     Functor for assigning atom labels by atom index using a dictionary of {index: label pairs}, e.g. {1:"label", ...}
     :param atom_labels: a dict of OE labels where the keys are the atom index (ints) and the values are the atom labels
@@ -99,11 +99,11 @@ class ApplyAtomLabelsFunctor(OEDisplayAtomPropBase):
     def CreateCopy(self):
         # __disown__ is required to allow C++ to take
         # ownership of this object and its memory
-        copy = ApplyAtomLabelsFunctor(self.atom_labels, self.index_start)
+        copy = ApplyAtomLabels(self.atom_labels, self.index_start)
         return copy.__disown__()
 
 
-class ApplyBondLabelsFunctor(OEDisplayBondPropBase):
+class ApplyBondLabels(OEDisplayBondPropBase):
     """
     Functor for assigning bond labels by bond index using a dictionary of {index: label pairs}, e.g. {1:"label", ...}
     :param bond_labels: a dict of OE labels where the keys are the bond index (ints) and the values are the bond labels
@@ -123,5 +123,5 @@ class ApplyBondLabelsFunctor(OEDisplayBondPropBase):
     def CreateCopy(self):
         # __disown__ is required to allow C++ to take
         # ownership of this object and its memory
-        copy = ApplyBondLabelsFunctor(self.bond_labels, self.index_start)
+        copy = ApplyBondLabels(self.bond_labels, self.index_start)
         return copy.__disown__()
