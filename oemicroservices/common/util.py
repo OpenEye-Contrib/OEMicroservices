@@ -21,14 +21,19 @@
 
 from flask import Response
 
-import base64
 import zlib
+import base64
 # noinspection PyUnresolvedReferences
 import sys
+import mimetypes
 
 from openeye.oechem import *
 from openeye.oedepict import *
 
+from werkzeug.datastructures import MultiDict, CombinedMultiDict
+
+# Initialize known mimetypes
+mimetypes.init()
 
 ############################
 # Python 2/3 Compatibility #
@@ -80,12 +85,6 @@ __mime_types = {
     'png': 'image/png',
     'pdf': 'application/pdf',
     'ps': 'application/postscript'
-}
-
-# Dictionary of OpenEye title locations
-__title_locations = {
-    'top': OETitleLocation_Top,
-    'bottom': OETitleLocation_Bottom
 }
 
 # Substructure highlight styles
@@ -149,40 +148,6 @@ __font_styles = {
 #                                                                                                                      #
 ########################################################################################################################
 
-
-def get_color_from_rgba(rgba):
-    """
-    Get an OpenEye color from an RRGGBBAA string
-    :param rgba: The RRGGBBAA hex string
-    :return: An OEColor object corresponding to the RGBA color
-    """
-    rgba = rgba.replace('#', '')
-    # Check if we have valid hex
-    try:
-        int(rgba, 16)
-    except ValueError:
-        raise ValueError("Invalid RGBA string: {0}".format(rgba))
-    return OEColor("#{0}".format(rgba))
-
-
-def get_title_location(location):
-    """
-    Returns an OETitleLocation or None if the title location is not recognized
-    :param location: The text title location (top | bottom)
-    :return: The corresponding OETitleLocation or None if location is not a valid OETitleLocation
-    """
-    return __title_locations.get(location.lower())
-
-
-def get_image_mime_type(ext):
-    """
-    Returns an image MIME type from common image extensions
-    :param ext: The image extension
-    :return: The image MIME type or None if the image extension is not known
-    """
-    return __mime_types.get(ext.replace('.', '').lower())
-
-
 def get_highlight_style(style):
     """
     Returns an OEHighlightStyle corresponding to a text style name
@@ -214,85 +179,31 @@ def render_error_image(width, height, message="Error depicting molecule"):
 
 def compress_string(s):
     """
-    Gzip and then b64 encode a string
-    :param s: The string to encode
+    Compress a string using gzip
+    :param s: The string to compress
     :type s: str
-    :return: The b64 encoded gzipped string
-    :rtype: str
+    :return: The gzipped string
+    :rtype: bytearray
     """
-    return base64.b64encode(compress(s.encode("utf-8"))).decode("utf-8")
+    return compress(s.encode("utf-8"))
 
 
 def inflate_string(s):
     """
-    Inflate a gzipped and b64 encoded string
+    Inflate a gzipped string
     :param s: The string to inflate
     :type s: str
     :return: The inflated string
     :rtype: str
     """
-    return zlib.decompress(base64.b64decode(s.encode('utf-8')), zlib.MAX_WBITS | 16).decode('utf-8')
-
-
-def read_molecule_from_string(mol_string, extension, gz=False, reparse=False):
-    """
-    Read a molecule from a molecule string
-    :param mol_string: The molecule represented as a string
-    :type mol_string: str
-    :param extension: The file extension indicating the file format of mol_string
-    :type extension: str
-    :param gz: Whether mol_string is a base64-encoded gzip
-    :type gz: bool
-    :param reparse: Whether we should reparse connectivity, bond orders, stereo, etc.,
-    :type reparse: bool
-    :return: The OEGraphMol representation of the molecule
-    :rtype: OEGraphMol
-    """
-    mol = OEGraphMol()
-    # Create the molecule input stream
-    ifs = oemolistream()
-
-    # Get the molecule format
-    if extension.lower() == "smiles":
-        mol_format = OEFormat_SMI
-    else:
-        mol_format = OEGetFileType(to_utf8(extension))
-    if mol_format == OEFormat_UNDEFINED:
-        raise Exception("Invalid molecule format: " + extension)
-
-    ifs.SetFormat(mol_format)
-
-    # Open stream to the molecule string
-    if gz:
-        ok = ifs.openstring(inflate_string(mol_string))
-    else:
-        ok = ifs.openstring(mol_string)
-
-    # If opening the molecule string was not OK
-    if not ok:
-        raise Exception("Error opening molecule")
-
-    # If we opened the stream then read the molecule
-    ok = OEReadMolecule(ifs, mol)
-
-    # If reading the molecule was not OK
-    if not ok:
-        raise Exception("Invalid molecule")
-
-    # If we are reparsing the molecule
-    if reparse:
-        OEDetermineConnectivity(mol)
-        OEFindRingAtomsAndBonds(mol)
-        OEPerceiveBondOrders(mol)
-        OEAssignImplicitHydrogens(mol)
-        OEAssignFormalCharges(mol)
-    return mol
+    return zlib.decompress(s, zlib.MAX_WBITS | 16)
 
 ########################################################################################################################
 #                                                                                                                      #
 #                                         Utility Functions for v2 of API                                              #
 #                                                                                                                      #
 ########################################################################################################################
+
 
 def get_font_style(style):
     """
@@ -323,25 +234,24 @@ def get_highlight_width(style, highlight_min_width):
     """
     if highlight_min_width:
         return highlight_min_width
-    elif style.lower() == 'color' or style.lower() == 'ballandstick':
+    elif style.lower() in ["color", "ballandstick"]:
         return 1
     else:
         return DEFAULT_HIGHLIGHT_MIN_WIDTH
 
 
-def normalize_atom_indices(atom_indices, index_start=0):
+def normalize_atom_indices(indices, start=0):
     """
     Ensures atom indices are integers and normalize to starting point
     :param atom_indices: list of indices
     :type: iterable of strings or ints that can be coerced into int
-    :param start: atom index start point (0 most common, 1 if from Pipeline Pilot)
+    :param indices: Array of atom indices
+    :param start: Atom index start point (0 most common, 1 if from Pipeline Pilot)
     :type: int
     :return: normalized indices
     :type: int list
     """
-    for i, atom_idx in enumerate(atom_indices):
-        atom_indices[i] = int(atom_idx) - index_start
-    return atom_indices
+    return [int(idx) - start for idx in indices]
 
 
 def fix_highlight_atoms_from_get(list_of_csv_indices, index_start=0):
@@ -351,23 +261,7 @@ def fix_highlight_atoms_from_get(list_of_csv_indices, index_start=0):
     :param index_start: starting point for atom numbering, default 0
     :return: list of normalized integer lists
     """
-    list_of_lists = []
-    for i, val in enumerate(list_of_csv_indices):
-        val = val.split(',')
-        val = normalize_atom_indices(val, index_start)
-        list_of_lists.append(val)
-    return list_of_lists
-
-
-def get_image_width_and_height(args):
-    """
-    :param args: Argument dict with 'size' defined, 'width' and 'height' optionally defined
-    :return: width, height tuple
-    """
-    size = args['size']
-    width = args['width'] if 'width' in args and args['width'] else size
-    height = args['height'] if 'height' in args and args['height'] else size
-    return width, height
+    return [normalize_atom_indices(sublist.split(','), index_start) for sublist in list_of_csv_indices]
 
 
 def get_OEAtomBondSet_from_indices(molecule, atom_indices, include_bonds=True, **kwargs):
@@ -523,9 +417,9 @@ class CogwheelHighlighting(ScaledHighlighting):
         self.innerContour = innerContour
         self.monochrome = monochrome
 
-    def highlight(self, OEColor, scale):
+    def highlight(self, color, scale):
         # Do scaling
-        return OEHighlightByCogwheel(OEColor, self.lineWidthScale, self._scale(scale, self.stickWidthScale),
+        return OEHighlightByCogwheel(color, self.lineWidthScale, self._scale(scale, self.stickWidthScale),
                               self._scale(scale, self.ballRadiusScale), self.innerContour, self.monochrome)
 
 
@@ -548,8 +442,8 @@ class BallAndStickHighlighting(ScaledHighlighting):
         self.ballRadiusScale = ballRadiusScale
         self.monochrome = monochrome
 
-    def highlight(self, OEColor, scale):
-        return OEHighlightByBallAndStick(OEColor, self._scale(scale, self.stickWidthScale),
+    def highlight(self, color, scale):
+        return OEHighlightByBallAndStick(color, self._scale(scale, self.stickWidthScale),
                                   self._scale(scale, self.ballRadiusScale), self.monochrome)
 
 
@@ -571,8 +465,8 @@ class StickHighlighting(ScaledHighlighting):
         self.monochrome = monochrome
         self.atomExternalHighlightRatio = atomExternalHighlightRatio
 
-    def highlight(self, OEColor, scale):
-        return OEHighlightByStick(OEColor, self._scale(scale, self.stickWidthScale), self.monochrome,
+    def highlight(self, color, scale):
+        return OEHighlightByStick(color, self._scale(scale, self.stickWidthScale), self.monochrome,
                            self.atomExternalHighlightRatio)
 
 
@@ -590,8 +484,8 @@ class LassoHighlighting(ScaledHighlighting):
         ScaledHighlighting.__init__(self,scaleMultiplier)
         self.lassoScale = lassoScale
 
-    def highlight(self, OEColor, scale):
-        return OEHighlightByLasso(OEColor, self._scale(scale, self.lassoScale))
+    def highlight(self, color, scale):
+        return OEHighlightByLasso(color, self._scale(scale, self.lassoScale))
 
 
 class ColorHighlighting():
@@ -606,8 +500,8 @@ class ColorHighlighting():
         self.lineWidthScale = lineWidthScale
 
     #
-    def highlight(self, OEColor, scale=0):
-        return OEHighlightByColor(OEColor, self.lineWidthScale)
+    def highlight(self, color, scale=0):
+        return OEHighlightByColor(color, self.lineWidthScale)
 
 
 def get_scaled_highlighting(highlight_style, **kwargs):
@@ -629,3 +523,72 @@ def get_scaled_highlighting(highlight_style, **kwargs):
 
     hl_class = __classes.get(highlight_style.lower(), CogwheelHighlighting)  #default to cogwheel
     return hl_class(**kwargs)
+
+
+def stringify_error_dict(d):
+    return "\n".join(["{}: {}".format(p, e if not type(e) == type(list()) else "; ".join(e)) for p, e in d.items()])
+
+def make_response_from_error_dict(d):
+    """
+    Create a response from an error dictionary
+    :param d: A dictionary of errors (will be formatted key: value on each line
+    :return: A Flask Response with the errors as the body
+    """
+    error = stringify_error_dict(d)
+    return Response(error, status=400, mimetype='text/plain')
+
+def get_mimetype(ext):
+    """
+    Safe get MIMETYPE from file extension
+    :param ext: The file extension
+    :return: The corresponding MIMETYPE or None if unknown
+    """
+    if not ext:
+        return None
+    try:
+        if ext[0] == '.':
+            return mimetypes.types_map[ext]
+        else:
+            return mimetypes.types_map[".{}".format(ext)]
+    # If the type is not found
+    except KeyError:
+        return None
+
+def combine_query_and_json_parameters(request):
+    """
+    Combine query arguments with parameters posed from JSON. This will also take any repeated parameter and create an
+    array, whereas non-repeated parameters will be single objects.
+    NOTE: This is modeled after the implementation of request.values in werkzeug.wrappers
+    :param request: The incoming request
+    :return: A CombinedMultiDict with the
+    """
+    # TODO: Handle array objects
+    args = []
+    # Handle the query parameters
+    if not isinstance(request.args, MultiDict):
+        args.append(MultiDict(request.args))
+    else:
+        args.append(request.args)
+    # Handle the JSON parameters
+    if request.is_json:
+        j = request.get_json()
+        if not isinstance(j, MultiDict):
+            args.append(MultiDict(j))
+        else:
+            args.append(j)
+    cm = CombinedMultiDict(args)
+    # Create a final dictionary (processed) that will hold arrays of input arguments only if multiple input arguments
+    # were given, otherwise it holds the single argument -- this is the schema processed and validated by Marshmallow
+    processed = {}
+    for key in cm.keys():
+        val = cm.getlist(key)
+        # Sanity check: do not keep empty keys
+        if not val:
+            continue
+        # Keep arrays only if the key has multiple values
+        if len(val) > 1:
+            processed[key] = val
+        # Otherwise take the only value in the array
+        else:
+            processed[key] = val.pop()
+    return processed

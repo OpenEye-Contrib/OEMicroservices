@@ -19,60 +19,31 @@
 # specific language governing permissions and limitations
 # under the License.
 
-import json
-# noinspection PyUnresolvedReferences
-import sys
+from oemicroservices.common.util import make_response_from_error_dict
 
-from flask.ext.restful import Resource, request
+from flask_restful import Resource
+from flask_restful import request
 from flask import Response
+
 from openeye.oechem import *
 
-from oemicroservices.common.util import compress_string, read_molecule_from_string
-
-############################
-# Python 2/3 Compatibility #
-############################
-
-# To support unicode as UTF-8 in Python 2 and 3
-if sys.version_info < (3,):
-    def to_utf8(u):
-        return u.encode('utf-8')
-else:
-    def to_utf8(u):
-        return u
+from marshmallow import Schema, fields
 
 ########################################################################################################################
 #                                                                                                                      #
 #                                                 MoleculeConvert                                                      #
 #                                       Convert between molecule file formats                                          #
-#                                                                                                                      #
-# Expects a POST:                                                                                                      #
-#                                                                                                                      #
-# {                                                                                                                    #
-#   molecule: {                                                                                                        #
-#     value:        A string that contains the molecule file string (*Required)                                        #
-#     input : {                                                                                                        #
-#       format:     The file format of the input molecule string (e.g. sdf, pdb, oeb, etc.) (*Required)                #
-#       gz:         If the input molecule string is gzip + b64 encoded                                                 #
-#     },                                                                                                               #
-#     output: {                                                                                                        #
-#       format:     The file format of the output molecule string (e.g. sdf, pdb, oeb, etc.) (*Required)               #
-#       gz:         If the output molecule string should be gzip + b64 encoded                                         #
-#     }                                                                                                                #
-#   }                                                                                                                  #
-# }                                                                                                                    #
-#                                                                                                                      #
-# Returns the following:                                                                                               #
-#                                                                                                                      #
-# {                                                                                                                    #
-#   molecule: {                                                                                                        #
-#       value:      A string containing the output molecule file string                                                #
-#       format:     The output file format                                                                             #
-#       gz:         If the output molecule string is gzip + b64 encoded                                                #
-#   }                                                                                                                  #
-# }                                                                                                                    #
+#                                                                                                                      #                                                                                    #
 ########################################################################################################################
 
+class MoleculeConvertRequest(Schema):
+    molecule = fields.String(required=True, validate=lambda s: s is not None and len(s) > 0)
+    ifmt = fields.String(required=True, validate=lambda f: OEIsReadable(f),
+                            error_messages={u'validator_failed': 'Unreadable input molecule format'})
+    ofmt = fields.String(required=True, validate=lambda f:OEIsWriteable(f),
+                            error_messages={u'validator_failed': 'Unreadable output molecule format'})
+    igz = fields.Boolean(required=False, missing=False)
+    ogz = fields.Boolean(required=False, missing=False)
 
 class MoleculeConvert(Resource):
     """
@@ -83,28 +54,14 @@ class MoleculeConvert(Resource):
         # Initialize superclass
         super(MoleculeConvert, self).__init__()
 
-    # noinspection PyMethodMayBeStatic
-    def __validate_schema(self, obj):
-        """
-        Validate schema for JSON POST'ed to the resource
-        :param obj: The parsed JSON object POST'ed to this resource
-        """
-        if not obj:
-            raise Exception("No POST data received")
-        if not isinstance(obj, dict):
-            raise Exception("Unexpected POST data received")
-        if 'molecule' not in obj:
-            raise Exception("No molecule information provided")
-        if 'value' not in obj['molecule']:
-            raise Exception("No molecule file provided")
-        if 'input' not in obj['molecule']:
-            raise Exception("No input information provided")
-        if 'format' not in obj['molecule']['input']:
-            raise Exception("No input format provided")
-        if 'output' not in obj['molecule']:
-            raise Exception("No output information provided")
-        if 'format' not in obj['molecule']['output']:
-            raise Exception("No output format provided")
+    def get(self):
+        # Get the args from only the query string
+        conversion = MoleculeConvertRequest().load( request.args.to_dict() )
+        if conversion.errors:
+            response = make_response_from_error_dict(conversion.errors)
+        else:
+            response = self.convert(conversion.data)
+        return response
 
     def post(self):
         """
@@ -112,47 +69,42 @@ class MoleculeConvert(Resource):
         :return: A Flask Response with the rendered image
         :rtype: Response
         """
-        # Parse the query options
+        # Get the args from both the query string and the JSON post body
+        conversion = MoleculeConvertRequest().load( request.values.to_dict() )
+        if conversion.errors:
+            response = make_response_from_error_dict(conversion.errors)
+        else:
+            response = self.convert(conversion.data)
+        return response
+
+    def convert(self, params):
+        """
+        Convert a molecule from one format to another.
+        :param params: The parameters as a MoleculeConvertRequest schema
+        :return: A Flask response with either the converted molecules or an error
+        """
+        mol = OEGraphMol()
         try:
-            # We exepct a JSON object in request.data with the protein and ligand data structures
-            payload = json.loads(request.data.decode("utf-8"))
-            # Checks to make sure we have everything we need in payload
-            self.__validate_schema(payload)
-            # Read the molecule
-            mol = read_molecule_from_string(
-                payload['molecule']['value'],
-                payload['molecule']['input']['format'],
-                payload['molecule']['input']['gz'] if 'gz' in payload['molecule']['input'] else False,
-                payload['molecule']['input']['reparse'] if 'reparse' in payload['molecule']['input'] else False
+            # Read the input molecule
+            OEReadMolFromBytes(mol, OEGetFileType(params['iformat']), params['igz'], params['molecule'])
+            if not mol.IsValid():
+                raise Exception("Invalid molecule")
+            # Handle the reponse headers
+            filename = "converted.{}".format(params['oformat'])
+            if params['ogz']:
+                mimetype = 'application/x-gzip'
+                filename += '.gz'
+            elif params['oformat'] == 'oeb':
+                mimetype = 'application/octet-stream'
+            else:
+                mimetype = 'text/plain'
+            # Convert and create the response
+            return Response(
+                OEWriteMolToBytes(OEGetFileType(params['oformat']), params['ogz'], mol),
+                headers={'Content-Disposition': "attachment; filename={}".format(filename)},
+                status=200,
+                mimetype=mimetype,
             )
-
-            # Prepare the molecule for writing
-            ofs = oemolostream()
-            if payload['molecule']['output']['format'] == "smiles":
-                ofs_format = OEFormat_SMI
-            else:
-                ofs_format = OEGetFileType(to_utf8(payload['molecule']['output']['format']))
-            if ofs_format == OEFormat_UNDEFINED:
-                raise Exception("Unknown output file type: " + payload['molecule']['output']['format'])
-            ofs.SetFormat(ofs_format)
-            ofs.openstring()
-            OEWriteMolecule(ofs, mol)
-
-            # Get molecule output stream
-            if 'gz' in payload['molecule']['output'] and payload['molecule']['output']['gz']:
-                output = compress_string(ofs.GetString().decode('utf-8'))
-            else:
-                output = ofs.GetString().decode('utf-8')
-
-            return Response(json.dumps(
-                {
-                    'molecule': {
-                        'value': output,
-                        'format': payload['molecule']['output']['format'],
-                        'gz': payload['molecule']['output']['gz'] if 'gz' in payload['molecule']['output'] else False
-                    }
-                }
-            ), status=200, mimetype='application/json')
-
         except Exception as ex:
-            return Response(json.dumps({"error": str(ex)}), status=400, mimetype='application/json')
+            return make_response_from_error_dict({"Error during conversion": str(ex)})
+

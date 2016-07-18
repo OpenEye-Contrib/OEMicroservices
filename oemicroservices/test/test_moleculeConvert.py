@@ -114,16 +114,31 @@ class TestMoleculeConvert(TestCase):
         # Perform the conversion to SDF
         response = self.app.post(
             '/v1/convert/molecule',
-            data=json.dumps({"molecule": {"value": target, "input": {"format": "pdb"}, "output": {"format": "sdf"}}}),
+            data=json.dumps(
+                {
+                    "molecule":
+                        {
+                            "value": target,
+                            "input":
+                                {
+                                    "format": "pdb"
+                                },
+                            "output":
+                                {
+                                    "format": "sdf"
+                                }
+                        }
+                }),
             headers={"content-type": "application/json"}
         )
+        print(response)
         self.assertEqual("200 OK", response.status)
 
         # Test the output schema
         payload = json.loads(response.data.decode('utf-8'))
         self.assertIn('molecule', payload)
         self.assertIn('value', payload['molecule'])
-        self.assertIn('gz', payload['molecule'])
+        self.assertIn('gzip', payload['molecule'])
 
         # Write the ligand directly to a string
         ofs = oemolostream()

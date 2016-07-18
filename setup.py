@@ -32,5 +32,5 @@ setup(
     author_email='scott.johnson6@merck.com',
     description='Collection of useful microservices using the OpenEye toolkits',
     test_suite='oemicroservices.test',
-    install_requires=['flask', 'flask-restful']
+    install_requires=['flask', 'flask-restful', 'marshmallow']
 )

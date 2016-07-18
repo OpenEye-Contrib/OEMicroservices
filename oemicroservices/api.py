@@ -20,12 +20,12 @@
 # under the License.
 
 from flask import Flask
-from flask.ext.restful import Api
+from flask_restful import Api
 
 from oemicroservices.resources.depict.interaction import InteractionDepictor, FindLigandInteractionDepictor
 from oemicroservices.resources.convert.convert import MoleculeConvert
 from oemicroservices.resources.depict.molecule import MoleculeDepictorV1 as MoleculeDepictor_v1
-from oemicroservices.resources.depict.molecule_v2 import MoleculeDepictorV2 as MoleculeDepictor_v2
+from oemicroservices.resources.depict.molecule import MoleculeDepictorV2 as MoleculeDepictor_v2
 
 app = Flask(__name__)
 api = Api(app)

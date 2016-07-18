@@ -22,6 +22,7 @@
 from unittest import TestCase
 import json
 import os
+import base64
 
 from oemicroservices.common.util import compress_string
 from oemicroservices.api import app
@@ -152,7 +153,7 @@ class TestInteractionDepictor(TestCase):
         self.assertEqual('{"error": "Error reading ligand: Invalid molecule format: invalid"}',
                          response.data.decode('utf-8'))
 
-    def test_interaction_b64_ligand(self):
+    def test_interaction_compress_ligand(self):
         """
         Test providing a gzipped and then base64 encoded ligand
         """
@@ -162,16 +163,18 @@ class TestInteractionDepictor(TestCase):
         with open(RECEPTOR_FILE, 'r') as f:
             receptor = f.read()
         # POST in JSON
+        encoded_ligand = base64.b64encode(compress_string(ligand)).decode('utf-8')
         response = self.app.post(
             '/v1/depict/interaction?format=png&debug=true',
             data=json.dumps(
                 {
-                    "ligand": {"value": compress_string(ligand), "format": "pdb", "gz": True},
+                    "ligand": {"value": encoded_ligand, "format": "pdb", "gzip": True, "base64": True},
                     "receptor": {"value": receptor, "format": "pdb"}
                 }
             ),
             headers={"content-type": "application/json"}
         )
+        print(response.data)
         self.assertEqual("200 OK", response.status)
 
     def test_interaction_b64_protein(self):

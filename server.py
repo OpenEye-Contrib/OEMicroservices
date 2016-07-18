@@ -23,4 +23,4 @@ from oemicroservices.api import app
 
 # FIXME Known 2015.Feb error: threaded=True will cause the OEDocking call in interaction.py to core dump
 if __name__ == '__main__':
-    app.run(debug=False, threaded=False)
+    app.run(debug=True, threaded=False)
