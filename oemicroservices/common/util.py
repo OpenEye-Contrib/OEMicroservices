@@ -32,7 +32,7 @@ from openeye.oedepict import *
 
 from werkzeug.datastructures import MultiDict, CombinedMultiDict
 
-# Initialize known mimetypes
+# Initialize known MIME-types
 mimetypes.init()
 
 ############################
@@ -562,20 +562,17 @@ def combine_query_and_json_parameters(request):
     :param request: The incoming request
     :return: A CombinedMultiDict with the
     """
-    # TODO: Handle array objects
-    args = []
     # Handle the query parameters
-    if not isinstance(request.args, MultiDict):
-        args.append(MultiDict(request.args))
-    else:
-        args.append(request.args)
-    # Handle the JSON parameters
-    if request.is_json:
-        j = request.get_json()
-        if not isinstance(j, MultiDict):
-            args.append(MultiDict(j))
-        else:
-            args.append(j)
+    args = [request.args if isinstance(request.args, MultiDict) else MultiDict(request.args)]
+    # Handle the JSON parameters for POST only -- this is because you can still put a Content-Type header on a GET
+    # request but request.data will be empty
+    if request.method == 'POST' and request.is_json:
+        j = request.get_json(silent=True)
+        # Throw exception on invalid JSON
+        if not j and len(request.data) > 0:
+            raise Exception("Invalid JSON {}".format(request.data))
+        args.append(j if isinstance(j, MultiDict) else MultiDict(j))
+    # Create a CombinedMultiDict object from the query and JSON arguments
     cm = CombinedMultiDict(args)
     # Create a final dictionary (processed) that will hold arrays of input arguments only if multiple input arguments
     # were given, otherwise it holds the single argument -- this is the schema processed and validated by Marshmallow

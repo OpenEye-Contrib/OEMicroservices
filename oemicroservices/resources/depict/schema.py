@@ -92,7 +92,7 @@ class BaseDepictorRequest(Schema):
     keep_title = fields.Boolean(required=True, attribute='keep-title', missing=False)
     title = fields.String(required=False, missing="")
     gzip = fields.Boolean(required=False, missing=False)
-    scale_bonds = fields.Boolean(required=False, missing=False)
+    scale_bonds = fields.Boolean(required=False, attribute='scale-bonds', missing=False)
     background = Color(required=False, missing="FFFFFF00")
     debug = fields.Boolean(required=False, missing=False)
     base64 = fields.Boolean(required=False, missing=False)
@@ -102,6 +102,9 @@ class BaseDepictorRequest(Schema):
     title_loc = TitleLocation(required=False, attribute='title-loc', missing='default')
     # Image format: 'imgfmt' is API v2 and 'format' is API v1
     imgfmt = ImageFormat(required=True, missing='png')
+
+    def __init__(self, *args, **kwargs):
+        super(BaseDepictorRequest, self).__init__(*args, **kwargs)
 
 ########################################################################################################################
 #                                                                                                                      #
@@ -236,6 +239,7 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
 
     @pre_load(pass_many=False)
     def preprocess_values(self, data):
+        print("BEFORE:", data)
         # Let size set both width and height
         if 'size' in data:
             data['height'] = data['size']
@@ -254,7 +258,7 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
             data['imgfmt'] = data.pop('format')
         # API v1 used highlight instead of highlight-ss
         if 'highlight' in data:
-            data['highlight-ss'] = data.pop('highlight')
+            data['highlight-ss'] = data['highlight']
         # API v1 used highlightcolor instead of highlight-color
         if 'highlightcolor' in data:
             data['highlight-color'] = data.pop('highlightcolor')
@@ -264,7 +268,10 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
         # API v1 used keeptitle instead of keep-title
         if 'keeptitle' in data:
             data['keep-title'] = data.pop('keeptitle')
-
+        # API v1 used scalebonds instead of scale-bonds
+        if 'scalebonds' in data:
+            data['scale-bonds'] = data.pop('scalebonds')
+        return data
     # Static block
     # depictor_arg_parser = depictor_base_arg_parser.copy()
     # Only for POST: the molecule string

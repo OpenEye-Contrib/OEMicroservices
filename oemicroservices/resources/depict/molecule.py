@@ -34,7 +34,7 @@ from oemicroservices.common.functor import ApplyAtomLabels, ApplyBondLabels
 import oemicroservices.common.util as util
 
 
-def __create_base_image_and_opts(mol, args):
+def create_base_image_and_opts(mol, args):
     """
     Creates the base molecule image shared by API v1 and v2 to avoid repeated code
     """
@@ -55,11 +55,10 @@ def __create_base_image_and_opts(mol, args):
         mol.SetTitle("")
         opts.SetTitleLocation(OETitleLocation_Hidden)
     # FIXME If highlighting by cogwheel, can't use transparent background (error in OEDepict)
-    if ('highlight-atoms' in args and args['highlight-atoms']) or ('highlight-ss' in args and args['highlight-ss']) \
-            and (args['highlight-style'] == OEHighlightByCogwheel):
+    if (args.get('highlight-atoms') or args.get('highlight-ss')) and (args['highlight-style'] == OEHighlightByCogwheel):
         args['background'].SetA(255)
     # Other configuration options
-    opts.SetBondWidthScaling(args['bond-scaling'])
+    opts.SetBondWidthScaling(args['scale-bonds'])
     opts.SetBackgroundColor(args['background'])
     return image, opts
 
@@ -86,27 +85,14 @@ class MoleculeDepictorV1(Resource):
 
     def get(self, fmt):
         """
-        Render an image with the molecule passed through the URL
-        :param fmt: The image format
+        Render an image with the molecule GET'ed to this resource
+        :param fmt: The molecule format
         :type fmt: str
         :return: The rendered image
-        :rtype: Response
+        :rtype: flask.Response
         """
-        # Parse the query options
-        # args = self.depictor_arg_parser.parse_args()
-        args = None
-        try:
-            # Read the molecule
-            mol = OEGraphMol()
-            OEReadMolFromBytes(mol, OEGetFileType(fmt), bool(args['gzip']), args['val'])
-            # Render the image
-            return self.__render_image(mol, args)
-        # On error render a PNG with an error message
-        except Exception as ex:
-            if args['debug']:
-                return Response(json.dumps({"error": str(ex)}), status=400, mimetype='application/json')
-            else:
-                return util.render_error_image(args['width'], args['height'], str(ex))
+        # The code for POST and GET are identical for API v1
+        return self.__process_request(request, fmt)
 
     def post(self, fmt):
         """
@@ -114,24 +100,78 @@ class MoleculeDepictorV1(Resource):
         :param fmt: The molecule format
         :type fmt: str
         :return: The rendered image
-        :rtype: Response
+        :rtype: flask.Response
+        """
+        # The code for POST and GET are identical for API v1
+        return self.__process_request(request, fmt)
+
+    def __process_request(self, request, fmt):
+        """
+        Process the request to render an image
+        :param fmt: The molecule format
+        :type fmt: str
+        :return: The rendered image
+        :rtype: flask.Response
         """
         # Parse the query options
-        args = self.depictor_arg_parser.parse_args()
+        size = (400, 400) # Width and height for error image in case exception is thrown
         try:
-            # Read the molecule
-            mol = OEGraphMol()
-            OEReadMolFromBytes(mol, OEGetFileType(fmt), bool(args['gzip']), args['val'])
-            return self.__render_image(mol, args)
-        # On error render a PNG with an error message
+            print(request, fmt)
+            # Process the query and JSON parameters
+            params = util.combine_query_and_json_parameters(request)
+            # Add the image format in the URL path to the arguments (this is API v1 specific)
+            params['molfmt'] = fmt
+            # Process all of the raw input parameters into sensible input arguments
+            print(params)
+            args = MoleculeDepctionRequest().load(params)
+            print(args)
+            # Get the size in case we thrown an exception
+            size = (args.data['width'], args.data['height'])
+            # If there were errors
+            if args.errors:
+                raise Exception(util.stringify_error_dict(args.errors))
+            # Render the image with the processed arguments
+            return self.__render_image(args.data)
         except Exception as ex:
+            return util.render_error_image(size[0], size[1], str(ex))
+
+    def __render_image(self, args):
+        """
+        Render an image with the molecule sent to this resource
+        :param fmt: The molecule format
+        :type fmt: MoleculeDepctionRequest
+        :return: The rendered image
+        :rtype: flask.Response
+        """
+        print("RENDERING IMAGE...")
+        # Read the molecule from the moleucle string
+        mol = OEGraphMol()
+        # return Response(str(args), status=200, mimetype='text/plain')
+        OEReadMolFromBytes(mol, OEGetFileType(args['molfmt']), args['gzip'], args['molecule'])
+        if not mol.IsValid():
             if args['debug']:
-                return Response(json.dumps({"error": str(ex)}), status=400, mimetype='application/json')
+                raise Exception("Invalid molecule -- format = {}, gzip = {}\n{}".format(
+                    args['molfmt'], args['gzip'], args['molecule']))
             else:
-                return util.render_error_image(args['width'], args['height'], str(ex))
+                raise Exception("Invalid molecule")
+        # Create the image
+        image, opts = create_base_image_and_opts(mol, args)
+        # Prepare the display
+        disp = OE2DMolDisplay(mol, opts)
+        # Do any substructure matching and highlighting
+        if args.get('highlight-ss'):
+            for querySmiles in args['highlight-ss']:
+                subs = OESubSearch(querySmiles)
+                for match in subs.Match(mol, True):
+                    OEAddHighlighting(disp, args['highlight-color'], args['highlight-style'], match)
+        # Render the image
+        OERenderMolecule(image, disp)
+        # Return the image in the response
+        img_content = OEWriteImageToString(args['imgfmt'], image)
+        return Response(img_content, mimetype=util.get_mimetype(args['imgfmt']))
 
     # noinspection PyMethodMayBeStatic
-    def __render_image(self, mol, args):
+    def __render_image_old(self, mol, args):
         """
         Render a small molecule image
         :param mol: The molecule
@@ -166,7 +206,7 @@ class MoleculeDepictorV1(Resource):
         if not title_location:
             title_location = OETitleLocation_Top
         # Create the image
-        image, opts = __create_base_image_and_opts(mol, args)
+        image, opts = create_base_image_and_opts(mol, args)
         # Prepare the display
         disp = OE2DMolDisplay(mol, opts)
         # Do any substructure matching and highlighting
