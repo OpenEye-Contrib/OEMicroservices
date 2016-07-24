@@ -22,7 +22,6 @@
 from flask import Response
 
 import zlib
-import base64
 # noinspection PyUnresolvedReferences
 import sys
 import mimetypes

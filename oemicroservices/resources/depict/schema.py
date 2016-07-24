@@ -31,6 +31,9 @@ from openeye.oechem import *
 
 
 class TitleLocation(fields.Field):
+    """
+    Custom marshmallow.fields.Field for the OETitleLocation namespace
+    """
     def _deserialize(self, value, attr, data):
         v = value.lower()
         if v == 'default':
@@ -46,6 +49,9 @@ class TitleLocation(fields.Field):
 
 
 class ImageFormat(fields.Field):
+    """
+    Custom marshmallow.fields.Field for valid image formats supported by the OEDepict and Grapheme Toolkits
+    """
     supported_formats = [ext.replace('.', '') for ext in OEGetSupportedImageFileExtensions()]
 
     def _validate(self, value):
@@ -59,6 +65,9 @@ class ImageFormat(fields.Field):
 
 
 class Color(fields.Field):
+    """
+    Custom marshmallow.fields.Field for #RRGGBBAA color strings
+    """
     def _deserialize(self, value, attr, data):
         try:
             int(value, 16)
@@ -71,14 +80,17 @@ class Color(fields.Field):
 
 
 class FontStyle(fields.Field):
+    """
+    Custom marshmallow.fields.Field for the OEFontStyle namespace
+    """
     def _deserialize(self, value, attr, data):
         v = value.lower()
         if v == 'default':
-            return OEFontStyle_Normal,
+            return OEFontStyle_Normal
         elif v == 'bold':
-            return OEFontStyle_Bold,
+            return OEFontStyle_Bold
         elif v == 'italic':
-            return OEFontStyle_Italic,
+            return OEFontStyle_Italic
         elif v == 'normal':
             return OEFontStyle_Normal
         else:
@@ -87,21 +99,23 @@ class FontStyle(fields.Field):
 
 class BaseDepictorRequest(Schema):
     """
-    The base schema for requesting an image depiction
+    Base marshmallow.Schema for molecule depiction requests that is shared between different request types
     """
-    keep_title = fields.Boolean(required=True, attribute='keep-title', missing=False)
+    keep_title = fields.Boolean(required=True, attribute='keep-title', load_from='keep-title', missing=False)
     title = fields.String(required=False, missing="")
     gzip = fields.Boolean(required=False, missing=False)
-    scale_bonds = fields.Boolean(required=False, attribute='scale-bonds', missing=False)
+    scale_bonds = fields.Boolean(required=False, attribute='scale-bonds', load_from='scale-bonds', missing=False)
     background = Color(required=False, missing="FFFFFF00")
     debug = fields.Boolean(required=False, missing=False)
     base64 = fields.Boolean(required=False, missing=False)
     size = fields.Integer(required=False)
+    width = fields.Integer(required=True, default=400, missing=400)
+    height = fields.Integer(required=True, default=400, missing=400)
     # Custom field types
     # The location of the title on the image
-    title_loc = TitleLocation(required=False, attribute='title-loc', missing='default')
+    title_loc = TitleLocation(required=False, attribute='title-loc', load_from='title-loc', missing='default')
     # Image format: 'imgfmt' is API v2 and 'format' is API v1
-    imgfmt = ImageFormat(required=True, missing='png')
+    imgfmt = ImageFormat(required=True, attribute='image-format', load_from='image-format', missing='png')
 
     def __init__(self, *args, **kwargs):
         super(BaseDepictorRequest, self).__init__(*args, **kwargs)
@@ -114,6 +128,9 @@ class BaseDepictorRequest(Schema):
 
 
 class HighlightStyle(fields.Field):
+    """
+    Custom marshmallow.fields.Field for the OEHighlightStyle namespace
+    """
     def _deserialize(self, value, attr, data):
         v = value.lower()
         if v == 'default':
@@ -134,7 +151,7 @@ class HighlightStyle(fields.Field):
 
 class TypedArray(fields.Field):
     """
-    Implements an array of typed objects.
+    Custom marshmallow.fields.Field for an arbitrary array of typed objects.
     """
     def __init__(self, *args, **kwargs):
         """
@@ -191,55 +208,69 @@ class TypedArray(fields.Field):
 
 class MoleculeDepctionRequest(BaseDepictorRequest):
     """
-    Depiction Request Parser for API v1
+    A marshmallow.Schema for molecule depiction requests
+    Compatible with API v1 and v2
     """
-    # 'molecule' is V2 compatible and 'val' is V1 compatible
+    # The molecule string or file contents to render
+    # - Query parameter: val (API v1)
+    # - Path parameter: molecule (API v2)
     molecule = fields.String(required=True, allow_none=False)
-    width = fields.Integer(required=True, default=400, missing=400)
-    height = fields.Integer(required=True, default=400, missing=400)
-    # Custom field types
-    # Highlight substructure: highlight is API v1 and highlight-ss is API v2 (multiple values allowed)
-    highlight_ss = TypedArray(required=False, attribute='highlight-ss', delimited=False, type=str)
-    # Hex code or string for coloring the substructure
-    highlight_color = Color(required=False, attribute='highlight-color', missing='7070FF')
+    # +--------------------+
+    # | Custom field types |
+    # +--------------------+
+    # Highlight substructure: SMARTS strings to use to highlight parts of the molecule
+    # - Query parameter: highlight (API v1) [deprecated]
+    # - Query parameter: highlight-ss (API v2)
+    # - Query parameter: highlight_ss (API v2)
+    highlight_ss = TypedArray(required=False, attribute='highlight-ss', load_from='highlight-ss')
+    # Default highlight color specified as an RRGGBBAA hex code
+    # - Query parameter: highlightcolor (API v1) [deprecated]
+    # - Query parameter: highlight-color (API v2)
+    # - Query parameter: highlight_color (API v2)
+    highlight_color = Color(required=False, attribute='highlight-color', load_from='highlight-color', missing='7070FF')
     # Style in which to render the highlighted substructure
-    highlight_style = HighlightStyle(required=False, attribute='highlight-style', missing='default')
+    highlight_style = HighlightStyle(required=False, attribute='highlight-style', load_from='highlight-style',
+                                     missing='default')
     # The input molecule format
-    molfmt = fields.String(required=True, missing='smi', validate=lambda f: OEIsReadable(f),
+    # - Path parameter: fmt (API v1)
+    # - Query parameter: molfmt (API v2)
+    # - Query parameter: molecule-format (API v2)
+    molfmt = fields.String(required=True, missing='smi', attribute='molecule-format', load_from='molecule-format',
+                           validate=lambda f: OEIsReadable(f),
                            error_messages={u'validator_failed': 'Unreadable input molecule format'})
     # For stick, ballandstick, and cogwheel styles, should we "nest" highlighting or keep all the same width
-    highlight_nest = fields.Integer(required=False, attribute='highlight-nest', missing=0)
+    # - Query parameter: highlight-nest (API v2)
+    # - Query parameter: highlight_nest (API v2)
+    highlight_nest = fields.Integer(required=False, attribute='highlight-nest', load_from='highlight-nest', missing=0)
     # Scale by which highlighting can be modified.  0 is default, count up with integers
-    highlight_scale = fields.Integer(required=False, attribute='highlight-scale', missing=0)
+    highlight_scale = fields.Integer(required=False, attribute='highlight-scale', load_from='highlight-scale',
+                                     missing=0)
     # For highlighting atoms by number: whether atoms indices count up by 1 or 0.  Atom numbers start at 0 using OEMol
     # numbering, set to 1 if calling from Pipeline Pilot
-    index_start = fields.Integer(required=False, attribute='index-start', missing=0)
+    index_start = fields.Integer(required=False, attribute='index-start', load_from='index-start', missing=0)
     # Comma separated list of atom numbers - we'll convert to int array inside the get method
     # These arrays should be of matched length, each atom set will correspond to the color of the matching index.
-    # If the matching index in highlightatomscolor isn't there, the color defaults to the highlight color argument.
-    highlight_atoms = TypedArray(required=False, attribute='highlight-atoms', delimited=True, delimiter=',', type=int)
+    # If the matching index in highlight-atoms-colors isn't there, the color defaults to the highlight-color argument.
+    highlight_atoms = TypedArray(required=False, attribute='highlight-atoms', load_from='highlight-atoms',
+                                 delimited=True, delimiter=',', type=int)
     # Optional arguments for doing atom highlighting by color and atom number
-    highlight_atoms_colors = TypedArray(required=False, attribute='highlight-atoms-colors', delimited=True,
-                                        delimiter=',', type=str)
-    # TODO: Type to parse JSON into array of arrays for highlight-atoms and highlight-atoms-colors
-    highlight_atoms_json = TypedArray(required=False, attribute='highlight-atoms-json', delimited=False,
-                                      type=lambda n: [])
+    highlight_atoms_colors = TypedArray(required=False, attribute='highlight-atoms-colors',
+                                        load_from='highlight-atom-colors', delimited=True, delimiter=',', type=str)
     # Atom labels are specified as a lists of [atom index, label] tuples e.g. (1, "label 1"), (14, "label 2")
     # TODO: Gotta do this too
-    atom_labels = TypedArray(required=False, attribute='atom-labels', delimited=False,
+    atom_labels = TypedArray(required=False, attribute='atom-labels', load_from='atom-labels', delimited=False,
                              type=lambda n: [])
     # Bond labels are specified as a lists of [bond index, label] tuples
     # TODO: Gotta do this too (too)
-    bond_labels = TypedArray(required=False, attribute='bond-labels', delimited=False,
+    bond_labels = TypedArray(required=False, attribute='bond-labels', load_from='bond-labels', delimited=False,
                              type=lambda n: [])
     # Color of atom/bond labels
-    label_color = Color(required=False, missing='404040')
+    label_color = Color(required=False, attribute='label-color', load_from='label-color', missing='404040')
     # Style of atom/bond labels
-    label_style = FontStyle(required=False, missing='default')
+    label_style = FontStyle(required=False, attribute='label-style', load_from='label-style', missing='default')
 
     @pre_load(pass_many=False)
     def preprocess_values(self, data):
-        print("BEFORE:", data)
         # Let size set both width and height
         if 'size' in data:
             data['height'] = data['size']
@@ -249,13 +280,13 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
         # |                                                                                                          |
         # | This section make the molecule depiction API v1 and v2 compatible with the same exact Marshmallow Schema |
         # | Need to take the values at index 0 because ImmutableMultiDict always returns an array for each key       |
-        # +----------------------------------------------------------------------------------------------------------#
+        # +----------------------------------------------------------------------------------------------------------+
         # API v1 used val instead of molecule
         if 'val' in data:
             data['molecule'] = data.pop('val')
         # API v1 used format instead of imgfmt
         if 'format' in data:
-            data['imgfmt'] = data.pop('format')
+            data['image-format'] = data.pop('format')
         # API v1 used highlight instead of highlight-ss
         if 'highlight' in data:
             data['highlight-ss'] = data['highlight']
@@ -271,6 +302,16 @@ class MoleculeDepctionRequest(BaseDepictorRequest):
         # API v1 used scalebonds instead of scale-bonds
         if 'scalebonds' in data:
             data['scale-bonds'] = data.pop('scalebonds')
+        # +----------------------------------------------------------------------------------------------------------+
+        # | Values that get parsed into other values                                                                 |
+        # |                                                                                                          |
+        # | This section contains alternative ways to define other values, such as a JSON specification of a value   |
+        # | that can already be defined by other sets of keywords.                                                   |
+        # +----------------------------------------------------------------------------------------------------------+
+        # JSON that specifies both atom-labels and atom-colors
+        if 'highlight-atoms-json' in data:
+            # TODO: Type to parse JSON into array of arrays for highlight-atoms and highlight-atoms-colors
+            pass
         return data
     # Static block
     # depictor_arg_parser = depictor_base_arg_parser.copy()
